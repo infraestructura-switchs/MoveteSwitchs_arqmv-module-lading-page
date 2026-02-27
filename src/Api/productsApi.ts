@@ -57,9 +57,7 @@ export const getProductsSorted = async ({ companyId, sort, category, name, signa
   if (category && category.trim() !== '') qs.set('category', category.trim());
   if (name && name.trim() !== '') qs.set('name', name.trim());
 
-  const path = name && name.trim() !== '' ? 'by-price' : 'by-price';
-
-  const res = await fetch(`${URL}/${path}?${qs.toString()}`, { signal });
+  const res = await fetch(`${URL}/by-price?${qs.toString()}`, { signal });
   if (!res.ok) throw new Error('Error al ordenar por precio');
 
   const data = await res.json();

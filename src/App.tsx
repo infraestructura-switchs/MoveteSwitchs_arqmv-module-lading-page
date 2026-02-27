@@ -127,6 +127,7 @@ function App() {
 
   const tokenParam = window.location.search || window.location.hash.split("?")[1] || "";
   const token = new URLSearchParams(tokenParam).get("token") ?? "";
+  const companyId = new URLSearchParams(tokenParam).get("companyId") ?? "";
 
   const cartItemsCount = cartItems.reduce(
     (sum, item) => sum + item.quantity,
@@ -277,7 +278,7 @@ useEffect(() => {
 
     try {
       const result = await getProductsSorted({
-        companyId: 238,
+        companyId: parseInt(companyId),
         sort,
         category: categoryParam,
         name: nameValue?.trim() ? nameValue.trim() : undefined,
@@ -409,7 +410,7 @@ useEffect(() => {
             activeCategory === "all" ? undefined : activeCategory.trim();
           try {
             const results = await searchProducts({
-              companyId: 238,
+              companyId:parseInt(companyId),
               name: searchTerm.trim(),
               category: categoryParam,
             });
@@ -447,7 +448,7 @@ useEffect(() => {
         const categoryParam =
           activeCategory === "all" ? undefined : activeCategory.trim();
         const results = await searchProducts({
-          companyId: 238,
+          companyId: parseInt(companyId),
           name: term,
           category: categoryParam,
           signal: controller.signal,

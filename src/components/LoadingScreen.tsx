@@ -2,12 +2,22 @@ import React, { useEffect, useState } from "react";
 
 const LoadingScreen: React.FC = () => {
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // 👈
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("companyId");
     setCompanyId(id);
+    setIsLoading(false);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-gray-500 border-opacity-50"></div>
+      </div>
+    );
+  }
 
   const getLogoAndStyles = () => {
     switch (companyId) {
@@ -40,13 +50,9 @@ const LoadingScreen: React.FC = () => {
   return (
     <div
       className="flex flex-col items-center justify-center min-h-screen"
-      style={{ backgroundColor: bgColor }} 
+      style={{ backgroundColor: bgColor }}
     >
-      <img
-        src={logoSrc}
-        alt="Logo"
-        className={`${logoSize} mb-8`}
-      />
+      <img src={logoSrc} alt="Logo" className={`${logoSize} mb-8`} />
       <div className="flex justify-center">
         <div className={`animate-spin rounded-full h-12 w-12 border-t-4 ${borderColor} border-opacity-50`}></div>
       </div>
