@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import pkg from "../package.json";
+import pkg from "../../package.json";
 
 const GenericScreen = () => {
   useEffect(() => {

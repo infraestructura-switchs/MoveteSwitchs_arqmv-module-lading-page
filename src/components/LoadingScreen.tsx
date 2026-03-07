@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import pkg from "../package.json";
+import pkg from "../../package.json";
 
 const LoadingScreen: React.FC = () => {
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -14,12 +14,14 @@ const LoadingScreen: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-gray-500 border-opacity-50"></div>
-      </div>
-      <footer className="absolute bottom-0 w-full text-center text-xs text-gray-400 py-2">
-        Versión {pkg.version}
-      </footer>
+      <>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-gray-500 border-opacity-50"></div>
+        </div>
+        <footer className="absolute bottom-0 w-full text-center text-xs text-gray-400 py-2">
+          Versión {pkg.version}
+        </footer>
+      </>
     );
   }
 
