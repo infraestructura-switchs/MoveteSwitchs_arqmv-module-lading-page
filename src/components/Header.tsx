@@ -3,10 +3,14 @@ import { Search, X } from "lucide-react";
 import { CompanyType } from "../types/companyType";
 
 const logoImg_chuzo_ivan = "/assets/icons/Logo_chuzo_ivan.png";
+// the backend sometimes returns a logoUrl but if we fall back to
+// hardcoded assets use the version that actually exists in public/.
 const logoImg_buen_nino = "/assets/image/buen-nino-company-logo.png";
 
 interface HeaderProps {
-  config: CompanyType;
+  // configuration object that may be partially populated; the component only
+  // reads the logo and the productNameCompany at the moment.
+  config: Partial<CompanyType>;
   cartItemsCount: number;
   onCartToggle: () => void;
   onAdminToggle: () => void;
@@ -28,12 +32,36 @@ export const Header: React.FC<HeaderProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("companyId");
-    setCompanyId(id);
+    // read from the shared storage instead of reparsing the URL every time
+    try {
+      const stored = window.localStorage.getItem("urlParams");
+      if (stored) {
+        const obj = JSON.parse(stored);
+        setCompanyId(obj.companyId ?? null);
+      }
+    } catch {
+      // fallback to parsing if storage isn't available
+      const rawHash = window.location.hash || "";
+      const cleanedHash = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
+      const tokenParam =
+        window.location.search || cleanedHash.replace(/^\?/, "") || "";
+      const params = new URLSearchParams(tokenParam);
+      const id = params.get("companyId");
+      setCompanyId(id);
+    }
   }, []);
 
   const getLogoAndStyles = () => {
+    // if the configuration object contains an explicit logo url use that
+    // before falling back to the hardcoded companyId switch.
+    if (config.logoUrl) {
+      return {
+        logoSrc: config.logoUrl,
+        logoSize: "h-12 sm:h-10 w-auto",
+        bgColor: "#fff",
+      };
+    }
+
     switch (companyId) {
       case "238":
         return {
@@ -74,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center justify-center sm:justify-start w-full sm:w-auto mb-4 sm:mb-0">
             <img
               src={logoSrc}
-              alt={config.productNameCompany}
+              alt={config.productNameCompany || "Movete"}
               className={`${logoSize} object-contain`}
             />
           </div>
@@ -82,6 +110,11 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex flex-1 justify-center sm:justify-between items-center w-full sm:w-auto sm:space-x-4 mb-4 sm:mb-0">
             <div className="relative w-full sm:max-w-md max-w-lg mx-auto">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#db3434]">
+                {/* always show the search icon inside the input; the previous
+                    implementation attempted to use the company logo, but when
+                    the image failed to load the browser rendered a camera
+                    glyph.  reverting to a fixed <Search> icon prevents that
+                    visual glitch. */}
                 <Search className="h-5 w-5" />
               </span>
 

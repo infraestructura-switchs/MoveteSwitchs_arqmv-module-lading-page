@@ -1,4 +1,24 @@
+import { useEffect } from "react";
+
 const GenericScreen = () => {
+  useEffect(() => {
+    // generic page – make sure the title and favicon show the default
+    document.title = "Movete";
+    const defaultHref = "/assets/image/default-favicon.png";
+
+    let link = document.getElementById("favicon") as HTMLLinkElement | null;
+    if (!link) {
+      link = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+    }
+
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    link.href = defaultHref;
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white text-center">
       <h1 className="text-4xl font-bold text-gray-600 uppercase mb-2">404 Error Page</h1>

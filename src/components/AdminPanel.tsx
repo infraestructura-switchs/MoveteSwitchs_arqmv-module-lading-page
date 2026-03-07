@@ -74,6 +74,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         setLatitude(company.latitude);
         setBaseValue(company.baseValue);
         setAdditionalValue(company.additionalValue);
+
+        // propagate the loaded configuration back to the parent so that
+        // the favicon/header/logo update immediately when the panel is
+        // opened with an existing company already saved on the server.
+        onUpdateConfig(company);
       }
     };
 

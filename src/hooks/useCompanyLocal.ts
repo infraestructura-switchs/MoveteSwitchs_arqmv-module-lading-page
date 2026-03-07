@@ -1,15 +1,9 @@
 import { useState, useEffect } from 'react';
 
-interface CompanyType {
-  companyId: number;
-  productNameCompany: string;
-  logoUrl: string | null;
-  numberWhatsapp: number;
-  longitude: string;
-  latitude: string;
-  baseValue: number;
-  additionalValue: number;
-}
+import { CompanyType } from "../types/companyType";
+
+// The hook returns the same CompanyType that the rest of the app uses.
+// previously this file re‑declared the interface; now we import it instead.
 
 export const useCompanyLocal = () => {
   const [company, setCompany] = useState<CompanyType | null>(null);

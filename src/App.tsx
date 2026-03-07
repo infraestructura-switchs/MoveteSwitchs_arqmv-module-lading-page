@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Header } from "./components/Header";
-import { ProductCard } from "./components/ProductCard";
 import { Cart } from "./components/Cart";
 import LoadingScreen from "./components/LoadingScreen";
 import { AdminPanel } from "./components/AdminPanel";
 import { useLocalStorage } from "./hooks/useLocalStorage";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { toProductType } from "./utils/category";
 import { Category } from "./types";
 import {
@@ -19,17 +17,37 @@ import {
   CartItem,
   ProductsResponse,
 } from "./types/productsType";
-import { CompanyTypeLocal } from "./hooks/useLocalStorage";
+import { CompanyType } from "./types/companyType";
 import { useCompanyLocal } from "./hooks/useCompanyLocal";
-import { Alert } from "@mui/material";
 import GenericScreen from "./components/GenericScreen";
 
+// refactored units
+import { parseUrlParams, storeUrlParams, getStoredUrlParam } from "./utils/urlParams";
+import { CategorySelector, CategoryOption } from "./components/CategorySelector";
+import { ProductGrid } from "./components/ProductGrid";
+import { SortOptions } from "./components/SortOptions";
+
 function App() {
+  // URL params are handled by a small utility module.
+  const initialUrlParams = parseUrlParams();
+  storeUrlParams(initialUrlParams);
+
+  function getStoredUrlParamLocal(key: string): string | null {
+    // alias so that other code in this file can still call the familiar name
+    return getStoredUrlParam(key);
+  }
+
+  // (moved above during replacement)
+
+  // maintain a reactive copy of the parameters so components can read them
+  const [urlParams, setUrlParams] = useState<Record<string, string>>(initialUrlParams);
+  const userToken = urlParams.userToken || "";
+  const qr = urlParams.qr || "";
+  const mesa = urlParams.mesa || "";
+
   const [allProducts, setAllProducts] = useState<ProductsResponse | null>(null);
   const [products, setProducts] = useState<ProductType[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [showNotification, setShowNotification] = useState(false);
-  const [loadingProducts, setLoadingProducts] = useState(false);
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [cartItems, setCartItems] = useLocalStorage<CartItem[]>(
@@ -39,13 +57,9 @@ function App() {
   const { company } = useCompanyLocal();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showLeftArrow, setShowLeftArrow] = useState(true);
-  const [showRightArrow, setShowRightArrow] = useState(true);
-  const categoriesRef = useRef<HTMLDivElement>(null);
+  // arrows and scrolling are now handled inside <CategorySelector>,
+  // so we don't need these pieces of state any longer.
   const fetchedRef = useRef(false);
-  const bannersRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const scrollInterval = useRef<NodeJS.Timeout | null>(null);
   const reqIdRef = useRef(0);
   const [sortOption, setSortOption] = useState<
     "" | "priceLowToHigh" | "priceHighToLow"
@@ -56,7 +70,6 @@ function App() {
   const bebidaImg = "/assets/icons/bebida.png";
   const combosImg = "/assets/icons/combos.png";
   const hamburguesaImg = "/assets/icons/hamburguesa.png";
-  const descuentoImg = "/assets/icons/descuento.png";
   const papitasImg = "/assets/icons/papitas.png";
   const popularImg = "/assets/icons/popular.png";
   const todosImg = "/assets/icons/todos.png";
@@ -88,7 +101,7 @@ function App() {
   };
 
   const [categoryOptions, setCategoryOptions] = useState<
-    { value: string; label: string; img: string }[]
+    CategoryOption[]
   >([
     { value: "all", label: "Ver todo", img: todosImg },
     { value: "HAMBURGUESAS", label: "Hamburguesa", img: hamburguesaImg },
@@ -115,19 +128,47 @@ function App() {
     { value: "CONSUMO EMPLEADOS", label: "Consumo empleados", img: papitasImg },
   ]);
 
-  const [config, setConfig] = useLocalStorage<CompanyTypeLocal>(
+  
+  const [config, setConfig] = useLocalStorage<CompanyType>(
     "restaurant-config",
     {
-      productNameCompany: "Chuzo de ivan",
+      companyId: initialUrlParams.companyId ? Number(initialUrlParams.companyId) : 0,
+      productNameCompany: initialUrlParams.productNameCompany || "Movete",
+      logoUrl: null,
       primaryColor: "#ffffffff",
+      numberWhatsapp: 0,
+      longitude: "",
+      latitude: "",
+      baseValue: 0,
+      additionalValue: 0,
     }
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
-  const tokenParam = window.location.search || window.location.hash.split("?")[1] || "";
-  const token = new URLSearchParams(tokenParam).get("token") ?? "";
-  const companyId = new URLSearchParams(tokenParam).get("companyId") ?? "";
+  const token = getStoredUrlParamLocal("token") ?? "";
+  const companyId = getStoredUrlParamLocal("companyId") ?? "";
+
+  // if the url params gave us any company-related values, merge them
+  // into the configuration state.  this hook runs only once at mount.
+  useEffect(() => {
+    const updates: Partial<CompanyType> = {};
+    if (initialUrlParams.productNameCompany) {
+      updates.productNameCompany = initialUrlParams.productNameCompany;
+    }
+    if (initialUrlParams.companyId) {
+      const n = Number(initialUrlParams.companyId);
+      if (!isNaN(n)) updates.companyId = n;
+    }
+    if (Object.keys(updates).length > 0) {
+      setConfig((prev) => ({ ...prev, ...updates }));
+    }
+
+    // also reflect the parsed values in urlParams state (in case components
+    // read it later) and re-store in localStorage for persistence.
+    setUrlParams(initialUrlParams);
+    storeUrlParams(initialUrlParams);
+  }, []);
 
   const cartItemsCount = cartItems.reduce(
     (sum, item) => sum + item.quantity,
@@ -136,44 +177,107 @@ function App() {
 
   useEffect(() => {
     if (company) {
-      setConfig({
-        ...company,
-        primaryColor: "#ffffffff",
-      });
+      setConfig((prev) => ({
+        companyId: company.companyId ?? prev.companyId,
+        productNameCompany:
+          company.productNameCompany || prev.productNameCompany || "Movete",
+        logoUrl: company.logoUrl ?? prev.logoUrl,
+        primaryColor: company.primaryColor || prev.primaryColor || "#ffffffff",
+        numberWhatsapp: company.numberWhatsapp ?? prev.numberWhatsapp,
+        longitude: company.longitude ?? prev.longitude,
+        latitude: company.latitude ?? prev.latitude,
+        baseValue: company.baseValue ?? prev.baseValue,
+        additionalValue: company.additionalValue ?? prev.additionalValue,
+      }));
     }
   }, [company]);
+
+  // choose a sensible page title depending on whether the configuration has
+  // been successfully loaded.  When we have a valid company and a token we
+  // use the company product name; otherwise fall back to the generic
+  // "Movete" brand.  This keeps 404/unauthorized screens from showing an
+  // unrelated name like the one that happened to be stored in localStorage.
+  useEffect(() => {
+    const defaultTitle = "Movete";
+    const companyName = config.productNameCompany || defaultTitle;
+    console.debug("title effect run; hasToken=", hasToken, "companyName=", companyName);
+
+    if (hasToken && companyName) {
+      document.title = companyName;
+      console.debug("set document.title to companyName");
+    } else {
+      document.title = defaultTitle;
+      console.debug("set document.title to default");
+    }
+  }, [hasToken, config.productNameCompany]);
+
+  // whenever the logo URL stored in configuration changes we push it
+  // to the <head> element so that the browser updates the favicon.  A
+  // null or empty value resets the link to the static default image.
+  useEffect(() => {
+    // update favicon whenever the logo URL changes; fall back to static
+    // default when no logo is available or when we are not properly
+    // authenticated.
+    const defaultHref = "/assets/image/default-favicon.png";
+    console.debug("favicon effect run; hasToken=", hasToken, "logoUrl=", config.logoUrl);
+
+    let link = document.getElementById("favicon") as HTMLLinkElement | null;
+    if (!link) {
+      link = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+    }
+
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+
+    if (hasToken && config.logoUrl) {
+      link.href = config.logoUrl;
+      console.debug("set favicon to logoUrl", config.logoUrl);
+    } else {
+      // when we don't have a valid company (e.g. 404 or missing token)
+      // always show the generic favicon
+      link.href = defaultHref;
+      console.debug("set favicon to default", defaultHref);
+    }
+  }, [config.logoUrl, hasToken]);
 
 useEffect(() => {
   if (fetchedRef.current) return;
   fetchedRef.current = true;
 
-  if (!token) {
-    console.error("Token no proporcionado o vacío");
-    setTimeout(() => {
-      setLoading(false);
-      setHasToken(false);
-    }, 1000);
-    return;
-  }
+  // diagnostic logging of the parameters we are using
+  console.debug("initialUrlParams in effect", initialUrlParams);
+  console.debug("derived token/companyId", { token, companyId });
+  console.debug("additional url params", { userToken, qr, mesa });
 
   (async () => {
     try {
-      const data: ApiResponse = await getProductsByCompany(token);
-      const normalized: ProductsResponse = (data.categories ?? []).reduce(
-        (acc: ProductsResponse, c) => {
-          const key = String(c.categoryName ?? "")
-            .trim()
-            .toUpperCase();
-          const items: ProductType[] = (c.products ?? []).map((dto) => {
-            const mapped = toProductType(dto);
-            return { ...mapped, category: key };
-          });
-          acc[key] = items;
-          return acc;
-        },
-        {}
-      );
+      // if we were able to read companyId from the query/hash, pass it along
+      // to the API call as well.  this prevents the helper from returning
+      // `null` when the id is only stored in the hash fragment.
+      let parsedCompanyId: number | undefined = undefined;
+      if (companyId) {
+        const n = Number(companyId);
+        if (!isNaN(n)) parsedCompanyId = n;
+      }
+      console.debug("fetching products with", { token, parsedCompanyId });
 
+      const data: ApiResponse = await getProductsByCompany(
+        token,
+        parsedCompanyId
+      );
+      console.debug("received products payload", data);
+      const normalized: ProductsResponse = {};
+      if (data && Array.isArray(data.categories)) {
+        data.categories.forEach(({ categoryName, products }) => {
+          normalized[categoryName] = products.map(toProductType);
+        });
+      }
+
+      // remember the full map so the "all" category rendering logic works
+      console.debug("normalized products map", normalized);
       setAllProducts(normalized);
 
       const all: ProductType[] = Object.values(normalized).reduce<ProductType[]>(
@@ -209,58 +313,12 @@ useEffect(() => {
       setTimeout(() => {
         setLoading(false);
       }, 1000);
-    } 
+    }
   })();
 }, []); 
 
 
-  useEffect(() => {
-    setTimeout(() => {
-      setIsVisible(true);
-    }, 2000);
-  }, []);
 
-  useEffect(() => {
-    if (!isVisible) return;
-    const el = bannersRef.current;
-    if (el) {
-      const scroll = () => {
-        if (!el) return;
-        el.scrollLeft += 1;
-        if (el.scrollLeft >= el.scrollWidth / 2) {
-          el.scrollLeft = 0;
-        }
-      };
-      scrollInterval.current = setInterval(scroll, 20);
-      return () => {
-        if (scrollInterval.current) {
-          clearInterval(scrollInterval.current);
-        }
-      };
-    }
-  }, [isVisible]);
-
-  useEffect(() => {
-    const checkScroll = () => {
-      if (categoriesRef.current) {
-        const scrollLeft = categoriesRef.current.scrollLeft;
-        const scrollWidth = categoriesRef.current.scrollWidth;
-        const clientWidth = categoriesRef.current.clientWidth;
-        setShowLeftArrow(scrollLeft > 0);
-        setShowRightArrow(scrollLeft + clientWidth < scrollWidth);
-      }
-    };
-    const refCurrent = categoriesRef.current;
-    if (refCurrent) {
-      refCurrent.addEventListener("scroll", checkScroll);
-    }
-    checkScroll();
-    return () => {
-      if (refCurrent) {
-        refCurrent.removeEventListener("scroll", checkScroll);
-      }
-    };
-  }, []);
 
   const fetchSortedFromBackend = async (
     opt: "priceLowToHigh" | "priceHighToLow",
@@ -286,7 +344,16 @@ useEffect(() => {
       });
       setProducts(result);
     } catch (err: any) {
-      if (err?.name !== "AbortError") console.error(err);
+      // axios throws CanceledError when an abort signal is used; its
+      // `name` is "CanceledError" and `code` is "ERR_CANCELED".  we want to
+      // silently ignore cancellation just as we do the standard AbortError.
+      if (
+        err?.name !== "AbortError" &&
+        err?.code !== "ERR_CANCELED" &&
+        err?.name !== "CanceledError"
+      ) {
+        console.error(err);
+      }
       setProducts([]);
     }
   };
@@ -308,8 +375,6 @@ useEffect(() => {
         return [...prev, { product, quantity, comment }];
       }
     });
-    setShowNotification(true);
-    setTimeout(() => setShowNotification(false), 1000);
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -318,24 +383,22 @@ useEffect(() => {
     } else {
       setCartItems((prev) =>
         prev.map((item) =>
-          item.product.id === id ? { ...item, quantity } : item
+          item.product.id.toString() === id ? { ...item, quantity } : item
         )
       );
     }
   };
 
   const removeFromCart = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.product.id !== id));
+    setCartItems((prev) =>
+      prev.filter((item) => item.product.id.toString() !== id)
+    );
   };
 
   const clearCart = () => {
     setCartItems([]);
   };
 
-  const deleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((product) => product.id !== id));
-    setCartItems((prev) => prev.filter((item) => item.product.id !== id));
-  };
 
   const addCategory = (categoryData: Omit<Category, "id">) => {
     const newCategory: Category = {
@@ -399,8 +462,9 @@ useEffect(() => {
     setProducts(allProducts[key] ?? []);
   };
 
-  const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const opt = event.target.value as "" | "priceLowToHigh" | "priceHighToLow";
+  const handleSortChange = (
+    opt: "" | "priceLowToHigh" | "priceHighToLow"
+  ) => {
     setSortOption(opt);
 
     if (!opt) {
@@ -410,7 +474,7 @@ useEffect(() => {
             activeCategory === "all" ? undefined : activeCategory.trim();
           try {
             const results = await searchProducts({
-              companyId:parseInt(companyId),
+              companyId: parseInt(companyId),
               name: searchTerm.trim(),
               category: categoryParam,
             });
@@ -469,68 +533,6 @@ useEffect(() => {
     };
   }, [searchTerm, activeCategory, sortOption]);
 
-  const banners = [
-    {
-      title: "Nuevo en parrilla",
-      subtitle: "Desde hoy",
-      date: "Hasta el 28 de febrero",
-      discount: "25% OFF",
-      color: "#FF0000",
-      bg: "#FFD932",
-      image:
-        "https://res.cloudinary.com/dfotyo6jc/image/upload/v1754405816/lucide_image_efuwrp.png",
-    },
-    {
-      title: "Super Aliado",
-      subtitle: "Solo por hoy",
-      date: "de 2:00 a 6:00 pm",
-      discount: "60% OFF",
-      color: "#0099FF",
-      bg: "#FFE066",
-      image:
-        "https://res.cloudinary.com/dfotyo6jc/image/upload/v1754405816/lucide_image_efuwrp.png",
-    },
-    {
-      title: "Nuevo en parrilla",
-      subtitle: "Desde hoy",
-      date: "Hasta el 28 de febrero",
-      discount: "25% OFF",
-      color: "#FF0000",
-      bg: "#FFD932",
-      image:
-        "https://res.cloudinary.com/dfotyo6jc/image/upload/v1754405816/lucide_image_efuwrp.png",
-    },
-    {
-      title: "Super Aliado",
-      subtitle: "Solo por hoy",
-      date: "de 2:00 a 6:00 pm",
-      discount: "60% OFF",
-      color: "#0099FF",
-      bg: "#FFE066",
-      image:
-        "https://res.cloudinary.com/dfotyo6jc/image/upload/v1754405816/lucide_image_efuwrp.png",
-    },
-    {
-      title: "Nuevo en parrilla",
-      subtitle: "Desde hoy",
-      date: "Hasta el 28 de febrero",
-      discount: "25% OFF",
-      color: "#FF0000",
-      bg: "#FFD932",
-      image:
-        "https://res.cloudinary.com/dfotyo6jc/image/upload/v1754405816/lucide_image_efuwrp.png",
-    },
-    {
-      title: "Super Aliado",
-      subtitle: "Solo por hoy",
-      date: "de 2:00 a 6:00 pm",
-      discount: "60% OFF",
-      color: "#0099FF",
-      bg: "#FFE066",
-      image:
-        "https://res.cloudinary.com/dfotyo6jc/image/upload/v1754405816/lucide_image_efuwrp.png",
-    },
-  ];
 
   if (loading) {
     return <LoadingScreen />;
@@ -553,192 +555,33 @@ useEffect(() => {
         onSearchChange={setSearchTerm}
         searchValue={searchTerm}
       />
-      {/*  
-      {showNotification && (
-        <div className="fixed top-4 right-4 w-full max-w-xs z-50">
-          <Alert
-            severity="success"
-            className="!text-xs !py-2 !px-3 flex justify-between items-center"
-            action={
-              <button
-                onClick={() => setShowNotification(false)}
-                className="text-gray-500 hover:text-gray-700 flex items-center justify-center w-6 h-6 rounded-full"
-              >
-                X
-              </button>
-            }
-          >
-            ¡Producto agregado al carrito!
-          </Alert>
-        </div>
-      )}
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 mt-4 relative">
-        <div
-          ref={bannersRef}
-          className="flex space-x-8 overflow-x-auto pb-2 scroll-smooth banners-scroll"
-          style={{ scrollbarWidth: "none" }}
-        >
-          {[...banners, ...banners].map((banner, idx) => (
-            <div
-              key={idx}
-              className="min-w-[300px] max-w-[320px] h-[140px] flex-shrink-0 rounded-2xl flex items-center px-6 py-4 relative"
-              style={{
-                background: banner.bg === "#FFE066" ? "#FFE066" : "#FF1C1C",
-                boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08)",
-              }}
-            >
-              {banner.bg === "#FFE066" ? (
-                <span
-                  className="absolute top-4 left-6 bg-[#0099FF] text-white text-xs font-bold px-3 py-1 rounded-full shadow"
-                  style={{ letterSpacing: 0.5 }}
-                >
-                  Super Aliados
-                </span>
-              ) : (
-                <span
-                  className="absolute top-4 left-6 bg-[#00C853] text-white text-xs font-bold px-3 py-1 rounded-full shadow"
-                  style={{ letterSpacing: 0.5 }}
-                >
-                  Nuevo en parrilla
-                </span>
-              )}
-              <div className="flex-1 flex flex-col justify-between h-full pl-0 pt-6">
-                <div>
-                  <div
-                    className={`font-bold leading-5 ${
-                      banner.bg === "#FFE066"
-                        ? "text-black text-lg"
-                        : "text-white text-lg"
-                    }`}
-                  >
-                    {banner.bg === "#FFE066" ? "Solo por hoy" : "Desde hoy"}
-                  </div>
-                  <div
-                    className={`text-sm ${
-                      banner.bg === "#FFE066" ? "text-black" : "text-white"
-                    }`}
-                  >
-                    {banner.bg === "#FFE066"
-                      ? "de 2:00 a 6:00 pm"
-                      : "Hasta el 28 de febrero"}
-                  </div>
-                </div>
-                <span
-                  className={`mt-1 font-extrabold rounded-lg text-xl ${
-                    banner.bg === "#FFE066" ? "text-white" : "text-white"
-                  } text-center`}
-                  style={{
-                    background: banner.bg === "#FFE066" ? "#FFB300" : "#7B1FFF",
-                    color: "#fff",
-                    display: "inline-block",
-                    minWidth: "unset",
-                    width: "110px",
-                    padding: "4px 0",
-                    margin: 0,
-                    lineHeight: 1.2,
-                    verticalAlign: "middle",
-                    borderRadius: "50px",
-                  }}
-                >
-                  {banner.discount}
-                </span>
-              </div>
-              <img
-                src={banner.image}
-                alt="promo"
-                className="object-contain ml-4"
-                style={{ maxWidth: "50%", height: "auto" }}
-              />
-            </div>
-          ))}
-        </div>
-        <style>{`.banners-scroll::-webkit-scrollbar { display: none; }`}</style>
-      </div>
-      */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-6">
         <main>
-          <div className="relative w-full">
-            <div
-              ref={categoriesRef}
-              className="flex space-x-8 overflow-x-auto pb-2 scroll-smooth categories-scroll whitespace-nowrap"
-            >
-              {categoryOptions.map((category) => (
-                <div
-                  key={category.value}
-                  onClick={() => {
-                    setActiveCategory(category.value);
-                    filterProducts(category.value);
-                  }}
-                  className={`flex flex-col items-center cursor-pointer p-2 rounded-lg transition-all ${
-                    activeCategory === category.value
-                      ? "bg-red-500 text-white"
-                      : "bg-transparent text-gray-700"
-                  }`}
-                >
-                  <img
-                    src={category.img}
-                    alt={category.label}
-                    className="w-8 h-8 mb-2 object-contain"
-                  />
-                  <span className="text-sm font-semibold">
-                    {category.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 mt-4 mb-6">
-            <span className="text-sm text-gray-500">Ordenar por:</span>
-            <select
-              value={sortOption}
-              onChange={handleSortChange}
-              className="p-2 border rounded-full w-64 bg-white focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="">Seleccionar</option>
-              <option value="priceLowToHigh">Menor precio</option>
-              <option value="priceHighToLow">Mayor precio</option>
-            </select>
-          </div>
+          {/* promotional banners scroll, uncomment to display */}
+          {/* <BannersScroller banners={banners} /> */}
+
+          <CategorySelector
+            options={categoryOptions}
+            active={activeCategory}
+            onSelect={(value) => {
+              setActiveCategory(value);
+              filterProducts(value);
+            }}
+          />
+
+          <SortOptions value={sortOption} onChange={handleSortChange} />
+
           <div className="mb-8">
-            {activeCategory === "all" && !searchTerm && !sortOption ? (
-              allProducts ? (
-                categoryOptions
-                  .filter((option) => option.value !== "all")
-                  .map(
-                    (option) =>
-                      allProducts[option.value]?.length > 0 && (
-                        <div key={option.value} className="mb-6">
-                          <h2 className="text-xl font-bold text-gray-800 mb-4">
-                            {option.label}
-                          </h2>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 md:gap-6">
-                            {allProducts[option.value].map((product) => (
-                              <ProductCard
-                                key={product.id}
-                                product={product}
-                                onAddToCart={addToCart}
-                                primaryColor={config.primaryColor}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )
-                  )
-              ) : null
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 md:gap-6">
-                {products.length > 0
-                  ? products.map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        onAddToCart={addToCart}
-                        primaryColor={config.primaryColor}
-                      />
-                    ))
-                  : null}
-              </div>
-            )}
+            <ProductGrid
+              activeCategory={activeCategory}
+              searchTerm={searchTerm}
+              sortOption={sortOption}
+              products={products}
+              allProducts={allProducts}
+              categoryOptions={categoryOptions}
+              onAddToCart={addToCart}
+              primaryColor={config.primaryColor || ""}
+            />
           </div>
         </main>
       </div>

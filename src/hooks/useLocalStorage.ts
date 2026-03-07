@@ -24,9 +24,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   return [storedValue, setValue] as const;
 }
 
+// CompanyTypeLocal was previously defined here but is no longer needed.  The
+// application now persists a full `CompanyType` object in localStorage, which
+// includes the logoUrl used for the favicon.  Keep the file focused on the
+// generic hook only.
 
-export interface CompanyTypeLocal {
-  productNameCompany: string;
-  primaryColor: string;
-  
-}

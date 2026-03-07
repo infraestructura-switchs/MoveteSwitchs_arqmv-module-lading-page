@@ -48,8 +48,23 @@ export const Cart: React.FC<CartProps> = ({
     0
   );
 
-  const tokenParam =
-  window.location.search || window.location.hash.split("?")[1] || "";
+  // try reading from the centralised storage first
+  let tokenParam = "";
+  try {
+    const stored = window.localStorage.getItem("urlParams");
+    if (stored) {
+      const obj = JSON.parse(stored);
+      tokenParam = new URLSearchParams(obj as any).toString();
+    }
+  } catch {
+    // if anything goes wrong, fall back to parsing the URL directly
+  }
+  if (!tokenParam) {
+    const rawHash = window.location.hash || "";
+    const cleanedHash = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
+    tokenParam =
+      window.location.search || cleanedHash.replace(/^\?/, "") || "";
+  }
   const phoneToken = new URLSearchParams(tokenParam).get("userToken") ?? "";
   const mesaToken = new URLSearchParams(tokenParam).get("mesa") ?? "";
   const qrToken = new URLSearchParams(tokenParam).get("qr") ?? "";
@@ -68,9 +83,14 @@ export const Cart: React.FC<CartProps> = ({
     decryptedData: mesa,
   } = useDecryptData(mesaToken);
 
+  // clear stored cart once when the component mounts.  previously the
+  // dependency list included `setCartItems`, which is a new function on every
+  // render (returned by our `useLocalStorage` hook) and caused React to
+  // re-run the effect indefinitely.  an empty array suffices because we only
+  // want this side‑effect once.
   useEffect(() => {
     setCartItems([]);
-  }, [setCartItems]);
+  }, []);
 
 
   const handleSendOrder = useCallback(async () => {
@@ -377,7 +397,10 @@ export const Cart: React.FC<CartProps> = ({
 };
 
 export function getCompanyIdFromUrl(): number | null {
-  const params = new URLSearchParams(window.location.search);
+  // mirror the logic used elsewhere to handle both query string and hash
+  const tokenParam =
+    window.location.search || window.location.hash.split("?")[1] || "";
+  const params = new URLSearchParams(tokenParam);
   const id = params.get("companyId");
   return id ? Number(id) : null;
 }
