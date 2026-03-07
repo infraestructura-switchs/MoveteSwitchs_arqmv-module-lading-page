@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import pkg from "../package.json";
 
 const GenericScreen = () => {
   useEffect(() => {
@@ -64,6 +65,9 @@ const GenericScreen = () => {
       
       <p className="text-2xl text-gray-500 mb-8">uh-oh! Pagina no encontrada...</p>
       
+      <footer className="absolute bottom-0 w-full text-center text-xs text-gray-400 py-2">
+        Versión {pkg.version}
+      </footer>
   
     </div>
   );

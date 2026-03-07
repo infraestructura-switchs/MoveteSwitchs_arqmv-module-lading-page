@@ -4,6 +4,8 @@ import { Cart } from "./components/Cart";
 import LoadingScreen from "./components/LoadingScreen";
 import { AdminPanel } from "./components/AdminPanel";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+// package.json is imported so we can display the current app version in the UI
+import pkg from "../package.json";
 import { toProductType } from "./utils/category";
 import { Category } from "./types";
 import {
@@ -129,6 +131,9 @@ function App() {
   ]);
 
   
+  // read version number from package.json so it can be shown in the footer
+  const appVersion = pkg.version;
+
   const [config, setConfig] = useLocalStorage<CompanyType>(
     "restaurant-config",
     {
@@ -604,6 +609,10 @@ useEffect(() => {
         config={config}
         onUpdateConfig={setConfig}
       />
+      {/* simple footer showing the current build version */}
+      <footer className="text-center text-xs text-gray-500 py-2">
+        Versión {appVersion}
+      </footer>
     </div>
   );
 }
