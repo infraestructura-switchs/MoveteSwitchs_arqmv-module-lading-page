@@ -22,7 +22,7 @@ const dup = <T,>(arr: T[]) => [...arr, ...arr];
 export const BannersScroller: React.FC<BannersScrollerProps> = ({ banners }) => {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setIsVisible(true), 2000);

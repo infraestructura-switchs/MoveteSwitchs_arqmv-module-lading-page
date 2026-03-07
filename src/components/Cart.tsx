@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { X, Plus, Minus, Trash2, ArrowLeft } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { IoMdInformationCircleOutline } from "react-icons/io";
 import { FaMinus } from 'react-icons/fa';
 import { Button, CircularProgress } from "@mui/material";
@@ -8,6 +8,7 @@ import { useDecryptData } from "../hooks/useDecrypt";
 import { BASE_URL_API } from '../constants/index';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { getCompanyIdFromUrl } from "../utils/urlParams";
 
 const URL: string = `${BASE_URL_API}`;
 //const URL: string = `/api/back-whatsapp-qr-app`;
@@ -17,7 +18,6 @@ interface CartProps {
   onClose: () => void;
   items: CartItem[];
   onUpdateQuantity: (id: string, quantity: number) => void;
-  onRemoveItem: (id: string) => void;
   onClearCart: () => void;
 }
 
@@ -26,7 +26,6 @@ export const Cart: React.FC<CartProps> = ({
   onClose,
   items,
   onUpdateQuantity,
-  onRemoveItem,
   onClearCart,
 }) => {
   const [openPopup, setOpenPopup] = useState(false);
@@ -34,7 +33,7 @@ export const Cart: React.FC<CartProps> = ({
   const [popupButtonText, setPopupButtonText] = useState("");
   const [popupAction, setPopupAction] = useState<(() => void) | null>(null);
   const [loading, setLoading] = useState(false);
-  const [cartItems, setCartItems] = useLocalStorage<CartItem[]>("restaurant-cart", []);
+  const [, setCartItems] = useLocalStorage<CartItem[]>("restaurant-cart", []);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("es-CO", {
@@ -53,8 +52,17 @@ export const Cart: React.FC<CartProps> = ({
   try {
     const stored = window.localStorage.getItem("urlParams");
     if (stored) {
-      const obj = JSON.parse(stored);
-      tokenParam = new URLSearchParams(obj as any).toString();
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === "object") {
+        const record = Object.entries(parsed as Record<string, unknown>).reduce(
+          (acc, [key, value]) => {
+            if (value != null) acc[key] = String(value);
+            return acc;
+          },
+          {} as Record<string, string>
+        );
+        tokenParam = new URLSearchParams(record).toString();
+      }
     }
   } catch {
     // if anything goes wrong, fall back to parsing the URL directly
@@ -90,7 +98,7 @@ export const Cart: React.FC<CartProps> = ({
   // want this side‑effect once.
   useEffect(() => {
     setCartItems([]);
-  }, []);
+  }, [setCartItems]);
 
 
   const handleSendOrder = useCallback(async () => {
@@ -186,7 +194,6 @@ export const Cart: React.FC<CartProps> = ({
       if (!response.ok) {
         throw new Error("No se pudo enviar el pedido");
       }
-      const data = await response.json();
       // Obtener companyId del token desencriptado o del orderData
       let companyId = null;
       if (authToken) {
@@ -233,6 +240,7 @@ export const Cart: React.FC<CartProps> = ({
     total,
     onClearCart,
     onClose,
+    authToken,
   ]);
 
   useEffect(() => {
@@ -287,7 +295,10 @@ export const Cart: React.FC<CartProps> = ({
                       <div className="flex items-center space-x-4">
                         <button
                           onClick={() =>
-                            onUpdateQuantity(item.product.id, item.quantity - 1)
+                            onUpdateQuantity(
+                              item.product.id.toString(),
+                              item.quantity - 1
+                            )
                           }
                           className="ml-2 flex items-center justify-center rounded-full border-2 border-[#db3434] text-[#db3434] hover:bg-[#ffe5d0] transition-colors w-8 h-8"
                         >
@@ -300,7 +311,10 @@ export const Cart: React.FC<CartProps> = ({
 
                         <button
                           onClick={() =>
-                            onUpdateQuantity(item.product.id, item.quantity + 1)
+                            onUpdateQuantity(
+                              item.product.id.toString(),
+                              item.quantity + 1
+                            )
                           }
                           className="ml-2 flex items-center justify-center rounded-full border-2 border-[#db3434] text-[#db3434] hover:bg-[#ffe5d0] transition-colors w-8 h-8"
                         >
@@ -396,11 +410,3 @@ export const Cart: React.FC<CartProps> = ({
   );
 };
 
-export function getCompanyIdFromUrl(): number | null {
-  // mirror the logic used elsewhere to handle both query string and hash
-  const tokenParam =
-    window.location.search || window.location.hash.split("?")[1] || "";
-  const params = new URLSearchParams(tokenParam);
-  const id = params.get("companyId");
-  return id ? Number(id) : null;
-}

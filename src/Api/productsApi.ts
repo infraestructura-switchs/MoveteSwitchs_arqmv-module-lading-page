@@ -2,12 +2,15 @@ import axios from 'axios';
 import {BASE_URL_API} from '../constants/index';
 import { ApiResponse,SearchParams,ProductType,SortParams} from '../types/productsType';
 import { toProductType } from "../utils/category";
-import { getCompanyIdFromUrl } from "../components/Cart";
+import { getCompanyIdFromUrl } from "../utils/urlParams";
 
 const URL: string = `${BASE_URL_API}/product`;
 //const URL: string = `/api/back-whatsapp-qr-app/product`;
 
-export const getProductsByCompany = async (token: string, companyId?: number): Promise<ApiResponse> => {
+export const getProductsByCompany = async (
+  token: string,
+  companyId?: number
+): Promise<ApiResponse> => {
   if (!token) {
     throw new Error("Token de autenticación no proporcionado");
   }
@@ -24,13 +27,18 @@ export const getProductsByCompany = async (token: string, companyId?: number): P
     });
     console.debug("productsApi.getProductsByCompany response", response.data);
     return response.data;
-  } catch (error: any) {
+  } catch (error) {
     console.error("productsApi.getProductsByCompany failed", error);
-    if (error.response) {
-      if (error.response.status === 401) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      if (status === 401) {
         throw new Error("Acceso no autorizado. Token inválido o expirado.");
       }
-      throw new Error(`Error en la solicitud: ${error.response.status} ${error.response.statusText}`);
+      if (error.response) {
+        throw new Error(
+          `Error en la solicitud: ${error.response.status} ${error.response.statusText}`
+        );
+      }
     }
     throw error;
   }
@@ -40,7 +48,7 @@ export const getProductsByCompany = async (token: string, companyId?: number): P
 export const searchProducts = async ({
   companyId, name, category, signal,
 }: SearchParams): Promise<ProductType[]> => {
-  const params: any = { companyId };
+  const params: Record<string, string | number> = { companyId };
   if (name && name.trim() !== '') params.name = name.trim();
   if (category && category.trim() !== '') params.category = category.trim();
 
@@ -53,8 +61,14 @@ export const searchProducts = async ({
   return (Array.isArray(data) ? data : []).map(toProductType);
 };
 
-export const getProductsSorted = async ({ companyId, sort, category, name, signal }: SortParams): Promise<ProductType[]> => {
-  const params: any = { companyId, sort };
+export const getProductsSorted = async ({
+  companyId,
+  sort,
+  category,
+  name,
+  signal,
+}: SortParams): Promise<ProductType[]> => {
+  const params: Record<string, string | number> = { companyId, sort };
   if (category && category.trim() !== '') params.category = category.trim();
   if (name && name.trim() !== '') params.name = name.trim();
 
@@ -65,4 +79,4 @@ export const getProductsSorted = async ({ companyId, sort, category, name, signa
 
   const data = response.data;
   return (Array.isArray(data) ? data : []).map(toProductType);
-}
+};

@@ -36,7 +36,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onUpdateConfig,
 }) => {
   const [productNameCompany, setproductNameCompany] = useState("");
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [numberWhatsapp, setNumberWhatsapp] = useState("");
   const [longitude, setLongitude] = useState("");
   const [latitude, setLatitude] = useState("");
@@ -85,7 +84,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (isOpen) {
       fetchCompanyData();
     }
-  }, [isOpen]);
+  }, [isOpen, onUpdateConfig]);
 
   const handleDeleteConfig = async () => {
     if (configData && configData.companyId) {
@@ -114,14 +113,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   if (!isOpen) return null;
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -212,18 +203,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
     setCategoryForm({ productName: "", displayproductName: "" });
     setShowCategoryForm(false);
-  };
-
-  const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setProductForm({
-      productName: product.productName,
-      description: product.description,
-      price: product.price,
-      category: product.category,
-      image: product.image,
-    });
-    setShowProductForm(true);
   };
 
   const handleEditCategory = (category: Category) => {

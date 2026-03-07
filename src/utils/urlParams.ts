@@ -29,3 +29,13 @@ export function getStoredUrlParam(key: string): string | null {
     return null;
   }
 }
+
+export function getCompanyIdFromUrl(): number | null {
+  const rawHash = window.location.hash || "";
+  const cleanedHash = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
+  const tokenParam =
+    window.location.search || cleanedHash.replace(/^\?/, "") || "";
+  const params = new URLSearchParams(tokenParam);
+  const id = params.get("companyId");
+  return id ? Number(id) : null;
+}

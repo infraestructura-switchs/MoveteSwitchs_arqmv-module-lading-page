@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Header } from "./components/Header";
 import { Cart } from "./components/Cart";
 import LoadingScreen from "./components/LoadingScreen";
@@ -25,14 +25,17 @@ import GenericScreen from "./components/GenericScreen";
 
 // refactored units
 import { parseUrlParams, storeUrlParams, getStoredUrlParam } from "./utils/urlParams";
-import { CategorySelector, CategoryOption } from "./components/CategorySelector";
-import { ProductGrid } from "./components/ProductGrid";
-import { SortOptions } from "./components/SortOptions";
+import { CategoryOption } from "./components/CategorySelector";
+import {
+  EcommerceLanding,
+  FeaturedCategory,
+  BenefitItem,
+} from "./components/EcommerceLanding";
+import { RestaurantLanding } from "./components/RestaurantLanding";
 
 function App() {
   // URL params are handled by a small utility module.
-  const initialUrlParams = parseUrlParams();
-  storeUrlParams(initialUrlParams);
+  const initialUrlParams = useMemo(() => parseUrlParams(), []);
 
   function getStoredUrlParamLocal(key: string): string | null {
     // alias so that other code in this file can still call the familiar name
@@ -46,6 +49,10 @@ function App() {
   const userToken = urlParams.userToken || "";
   const qr = urlParams.qr || "";
   const mesa = urlParams.mesa || "";
+  const templateLanding =
+    urlParams.templateLanding === "EcommerceLanding"
+      ? "EcommerceLanding"
+      : "RestaurantLanding";
 
   const [allProducts, setAllProducts] = useState<ProductsResponse | null>(null);
   const [products, setProducts] = useState<ProductType[]>([]);
@@ -76,31 +83,41 @@ function App() {
   const popularImg = "/assets/icons/popular.png";
   const todosImg = "/assets/icons/todos.png";
 
-  const categoryImages: Record<string, string> = {
-    ALL: todosImg,
-    HAMBURGUESAS: hamburguesaImg,
-    DESGRANADOS: popularImg,
-    PERROS: combosImg,
-    CHUZOS: papitasImg,
-    ALITAS: popularImg,
-    CARNES: papitasImg,
-    AREPAS: popularImg,
-    GASEOSAS: bebidaImg,
-    TOSTADAS: combosImg,
-    COMBOS: papitasImg,
-    MAIZITOS: combosImg,
-    APLASTADOS: combosImg,
-    SANDWICHES: combosImg,
-    PAPAS: papitasImg,
-    ADICIONES: papitasImg,
-    "JUGOS AGUA": papitasImg,
-    "JUGOS EN LECHE": papitasImg,
-    "FRAPPE AGUA ": papitasImg,
-    "FRAPPE EN LECHE": papitasImg,
-    "JUGOS HIT": papitasImg,
-    MALTEADAS: bebidaImg,
-    "CONSUMO EMPLEADOS": papitasImg,
-  };
+  const categoryImages = useMemo<Record<string, string>>(
+    () => ({
+      ALL: todosImg,
+      HAMBURGUESAS: hamburguesaImg,
+      DESGRANADOS: popularImg,
+      PERROS: combosImg,
+      CHUZOS: papitasImg,
+      ALITAS: popularImg,
+      CARNES: papitasImg,
+      AREPAS: popularImg,
+      GASEOSAS: bebidaImg,
+      TOSTADAS: combosImg,
+      COMBOS: papitasImg,
+      MAIZITOS: combosImg,
+      APLASTADOS: combosImg,
+      SANDWICHES: combosImg,
+      PAPAS: papitasImg,
+      ADICIONES: papitasImg,
+      "JUGOS AGUA": papitasImg,
+      "JUGOS EN LECHE": papitasImg,
+      "FRAPPE AGUA ": papitasImg,
+      "FRAPPE EN LECHE": papitasImg,
+      "JUGOS HIT": papitasImg,
+      MALTEADAS: bebidaImg,
+      "CONSUMO EMPLEADOS": papitasImg,
+    }),
+    [
+      todosImg,
+      hamburguesaImg,
+      popularImg,
+      combosImg,
+      papitasImg,
+      bebidaImg,
+    ]
+  );
 
   const [categoryOptions, setCategoryOptions] = useState<
     CategoryOption[]
@@ -150,6 +167,8 @@ function App() {
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const companyDisplayName = config.productNameCompany || "Movete";
+  const primaryColor = config.primaryColor || "#0f172a";
 
   const token = getStoredUrlParamLocal("token") ?? "";
   const companyId = getStoredUrlParamLocal("companyId") ?? "";
@@ -173,7 +192,7 @@ function App() {
     // read it later) and re-store in localStorage for persistence.
     setUrlParams(initialUrlParams);
     storeUrlParams(initialUrlParams);
-  }, []);
+  }, [initialUrlParams, setConfig, setUrlParams]);
 
   const cartItemsCount = cartItems.reduce(
     (sum, item) => sum + item.quantity,
@@ -195,7 +214,7 @@ function App() {
         additionalValue: company.additionalValue ?? prev.additionalValue,
       }));
     }
-  }, [company]);
+  }, [company, setConfig]);
 
   // choose a sensible page title depending on whether the configuration has
   // been successfully loaded.  When we have a valid company and a token we
@@ -320,12 +339,21 @@ useEffect(() => {
       }, 1000);
     }
   })();
-}, []); 
+}, [
+  categoryImages,
+  categoryOptions,
+  companyId,
+  initialUrlParams,
+  mesa,
+  qr,
+  token,
+  userToken,
+]); 
 
 
 
 
-  const fetchSortedFromBackend = async (
+  const fetchSortedFromBackend = useCallback(async (
     opt: "priceLowToHigh" | "priceHighToLow",
     categoryValue?: string,
     nameValue?: string
@@ -348,20 +376,18 @@ useEffect(() => {
         signal: controller.signal,
       });
       setProducts(result);
-    } catch (err: any) {
-      // axios throws CanceledError when an abort signal is used; its
-      // `name` is "CanceledError" and `code` is "ERR_CANCELED".  we want to
-      // silently ignore cancellation just as we do the standard AbortError.
+    } catch (err) {
+      const errObj = err as { name?: string; code?: string };
       if (
-        err?.name !== "AbortError" &&
-        err?.code !== "ERR_CANCELED" &&
-        err?.name !== "CanceledError"
+        errObj?.name !== "AbortError" &&
+        errObj?.code !== "ERR_CANCELED" &&
+        errObj?.name !== "CanceledError"
       ) {
         console.error(err);
       }
       setProducts([]);
     }
-  };
+  }, [activeCategory, companyId]);
 
   const addToCart = (
     product: ProductType,
@@ -451,7 +477,7 @@ useEffect(() => {
     }
   };
 
-  const filterProducts = (category: string) => {
+  const filterProducts = useCallback((category: string) => {
     if (!allProducts) {
       setProducts([]);
       return;
@@ -465,9 +491,9 @@ useEffect(() => {
     }
     const key = category.trim().toUpperCase();
     setProducts(allProducts[key] ?? []);
-  };
+  }, [allProducts]);
 
-  const handleSortChange = (
+  const handleSortChange = useCallback((
     opt: "" | "priceLowToHigh" | "priceHighToLow"
   ) => {
     setSortOption(opt);
@@ -495,7 +521,25 @@ useEffect(() => {
       return;
     }
     fetchSortedFromBackend(opt, activeCategory, searchTerm);
-  };
+  }, [
+    activeCategory,
+    companyId,
+    fetchSortedFromBackend,
+    filterProducts,
+    searchTerm,
+  ]);
+
+  const handleSelectCategory = useCallback((value: string) => {
+    setActiveCategory(value);
+    filterProducts(value);
+  }, [filterProducts]);
+
+  const handleSelectFeaturedCategory = useCallback((value: string) => {
+    setSearchTerm("");
+    setSortOption("");
+    setActiveCategory(value);
+    filterProducts(value);
+  }, [filterProducts]);
 
   useEffect(() => {
     const term = searchTerm.trim();
@@ -525,8 +569,9 @@ useEffect(() => {
         if (reqIdRef.current !== myReqId) return;
 
         setProducts(results);
-      } catch (err: any) {
-        if (err?.name === "AbortError") return;
+      } catch (err) {
+        const errObj = err as { name?: string };
+        if (errObj?.name === "AbortError") return;
         console.error("Error en búsqueda:", err);
         setProducts([]);
       }
@@ -536,8 +581,54 @@ useEffect(() => {
       clearTimeout(t);
       controller.abort();
     };
-  }, [searchTerm, activeCategory, sortOption]);
+  }, [
+    searchTerm,
+    activeCategory,
+    sortOption,
+    companyId,
+    fetchSortedFromBackend,
+    filterProducts,
+  ]);
 
+  const featuredCategories: FeaturedCategory[] = (() => {
+    if (!allProducts) return [];
+    const entries = Object.entries(allProducts)
+      .filter(([key]) => key.toLowerCase() !== "all")
+      .map(([key, items]) => ({ key, count: items.length }))
+      .filter((entry) => entry.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+    return entries.map((entry) => {
+      const option = categoryOptions.find((opt) => opt.value === entry.key);
+      return {
+        value: entry.key,
+        label:
+          option?.label ||
+          entry.key.charAt(0).toUpperCase() + entry.key.slice(1).toLowerCase(),
+        img: option?.img || categoryImages[entry.key] || popularImg,
+        count: entry.count,
+      };
+    });
+  })();
+
+  const benefitItems: BenefitItem[] = [
+    {
+      title: "Envíos ágiles",
+      description: "Entregas rápidas para que estrenes cuanto antes.",
+    },
+    {
+      title: "Pagos seguros",
+      description: "Transacciones protegidas para comprar con confianza.",
+    },
+    {
+      title: "Cambios fáciles",
+      description: "Flexibilidad para ajustar tu compra sin complicaciones.",
+    },
+    {
+      title: "Soporte cercano",
+      description: "Acompañamiento humano cuando lo necesites.",
+    },
+  ];
 
   if (loading) {
     return <LoadingScreen />;
@@ -560,43 +651,45 @@ useEffect(() => {
         onSearchChange={setSearchTerm}
         searchValue={searchTerm}
       />
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-6">
-        <main>
-          {/* promotional banners scroll, uncomment to display */}
-          {/* <BannersScroller banners={banners} /> */}
-
-          <CategorySelector
-            options={categoryOptions}
-            active={activeCategory}
-            onSelect={(value) => {
-              setActiveCategory(value);
-              filterProducts(value);
-            }}
-          />
-
-          <SortOptions value={sortOption} onChange={handleSortChange} />
-
-          <div className="mb-8">
-            <ProductGrid
-              activeCategory={activeCategory}
-              searchTerm={searchTerm}
-              sortOption={sortOption}
-              products={products}
-              allProducts={allProducts}
-              categoryOptions={categoryOptions}
-              onAddToCart={addToCart}
-              primaryColor={config.primaryColor || ""}
-            />
-          </div>
-        </main>
-      </div>
+      {templateLanding === "EcommerceLanding" ? (
+        <EcommerceLanding
+          config={config}
+          companyDisplayName={companyDisplayName}
+          featuredCategories={featuredCategories}
+          benefitItems={benefitItems}
+          sortOption={sortOption}
+          onSortChange={handleSortChange}
+          categoryOptions={categoryOptions}
+          activeCategory={activeCategory}
+          onSelectCategory={handleSelectCategory}
+          onSelectFeaturedCategory={handleSelectFeaturedCategory}
+          products={products}
+          allProducts={allProducts}
+          onAddToCart={addToCart}
+          primaryColor={primaryColor}
+          searchTerm={searchTerm}
+          onOpenCart={() => setIsCartOpen(true)}
+        />
+      ) : (
+        <RestaurantLanding
+          categoryOptions={categoryOptions}
+          activeCategory={activeCategory}
+          onSelectCategory={handleSelectCategory}
+          sortOption={sortOption}
+          onSortChange={handleSortChange}
+          products={products}
+          allProducts={allProducts}
+          onAddToCart={addToCart}
+          primaryColor={primaryColor}
+          searchTerm={searchTerm}
+        />
+      )}
       <Cart
         isOpen={isCartOpen}
         items={cartItems}
         onClose={() => setIsCartOpen(false)}
         onUpdateQuantity={updateQuantity}
         onClearCart={clearCart}
-        onRemoveItem={removeFromCart}
       />
       <AdminPanel
         isOpen={isAdminOpen}
@@ -609,10 +702,17 @@ useEffect(() => {
         config={config}
         onUpdateConfig={setConfig}
       />
-      {/* simple footer showing the current build version */}
-      <footer className="text-center text-xs text-gray-500 py-2">
-        Versión {appVersion}
-      </footer>
+      {templateLanding === "EcommerceLanding" ? (
+        <footer className="text-center text-xs text-gray-500 py-6">
+          <p>
+            {companyDisplayName} · Versión {appVersion}
+          </p>
+        </footer>
+      ) : (
+        <footer className="text-center text-xs text-gray-500 py-2">
+          Versión {appVersion}
+        </footer>
+      )}
     </div>
   );
 }

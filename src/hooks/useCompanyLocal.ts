@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { CompanyType } from "../types/companyType";
 
@@ -6,9 +6,9 @@ import { CompanyType } from "../types/companyType";
 // previously this file re‑declared the interface; now we import it instead.
 
 export const useCompanyLocal = () => {
-  const [company, setCompany] = useState<CompanyType | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [company] = useState<CompanyType | null>(null);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
 
   {/* Hook para obtener la información de la empresa
 
