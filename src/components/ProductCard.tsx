@@ -14,14 +14,20 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onAddToCart,
+  primaryColor,
+  onViewDetails,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [justClicked, setJustClicked] = useState(false);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
   const handleCardClick = () => {
     console.debug("ProductCard clicked", product.id);
+    // flash highlight
+    setJustClicked(true);
+    setTimeout(() => setJustClicked(false), 300);
     if (onViewDetails) {
       onViewDetails(product);
     }
@@ -32,7 +38,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onClick={handleCardClick}
       onMouseEnter={() => (document.body.style.cursor = "pointer")}
       onMouseLeave={() => (document.body.style.cursor = "")}
-      className="flex items-center bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border border-gray-100 p-3 sm:p-4 min-h-[120px] cursor-pointer"
+      className={`flex items-center bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border p-3 sm:p-4 min-h-[120px] cursor-pointer ${
+        justClicked ? `border-2` : "border-gray-100"
+      }`}
+      style={justClicked ? { borderColor: primaryColor } : undefined}
     >
       <img
         src={product.image}
@@ -44,10 +53,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div className="flex flex-col flex-1 ml-3 sm:ml-4 min-w-0 cursor-pointer">
         <div className="flex items-start justify-between gap-3 cursor-pointer">
           <div className="min-w-0">
-            <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">
-              {product.productName} {'titulo'}
+            <h3 className={`font-bold text-sm sm:text-base truncate ${
+                justClicked ? "bg-yellow-100" : "text-gray-800"
+              }`}>
+              {product.productName}
             </h3>
-            <span className="text-base sm:text-lg font-bold text-black">
+            <span className={`text-base sm:text-lg font-bold ${
+                justClicked ? "text-blue-600" : "text-black"
+              }`}>
               {new Intl.NumberFormat("es-CO", {
                 style: "currency",
                 currency: "COP",
