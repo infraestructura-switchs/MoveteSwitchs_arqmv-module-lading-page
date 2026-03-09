@@ -30,6 +30,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
+      onMouseEnter={() => (document.body.style.cursor = "pointer")}
+      onMouseLeave={() => (document.body.style.cursor = "")}
       className="flex items-center bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border border-gray-100 p-3 sm:p-4 min-h-[120px] cursor-pointer"
     >
       <img
@@ -43,7 +45,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex items-start justify-between gap-3 cursor-pointer">
           <div className="min-w-0">
             <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">
-              {product.productName}
+              {product.productName} {'titulo'}
             </h3>
             <span className="text-base sm:text-lg font-bold text-black">
               {new Intl.NumberFormat("es-CO", {

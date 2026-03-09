@@ -75,6 +75,20 @@ export const EcommerceLanding = ({
       />
     );
   }
+
+  // helper to pick readable text color against primaryColor background
+  const getContrastColor = (hex: string) => {
+    let h = hex.replace("#", "");
+    if (h.length === 3) {
+      h = h.split("").map((c) => c + c).join("");
+    }
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 128 ? "black" : "white";
+  };
+
   const mockHeroBanners = [
     "https://multi-catalogo.encatalogo.com/./imagenes_banners/pantalones.png",
     "https://multi-catalogo.encatalogo.com/./imagenes_banners/banneeer%202.png",
@@ -176,7 +190,13 @@ export const EcommerceLanding = ({
           <div className="flex overflow-x-auto gap-4 scroll-smooth hide-scrollbar pb-6 snap-x snap-mandatory">
             {mockMasVendidos.map((prod, i) => (
               <div key={i} className="flex-shrink-0 w-44 snap-start rounded-[16px] overflow-hidden bg-white shadow-md border border-gray-100 flex flex-col relative transition">
-                <span className="absolute top-2 left-2 bg-blue-500 text-white text-[9px] px-2 py-[2px] rounded z-10 font-bold uppercase" style={{ backgroundColor: primaryColor }}>Más Vendido</span>
+                <span
+                  className="absolute top-2 left-2 text-[9px] px-2 py-[2px] rounded z-10 font-bold uppercase"
+                  style={{
+                    backgroundColor: primaryColor,
+                    color: getContrastColor(primaryColor),
+                  }}
+                >Más Vendido</span>
                 <div className="h-44 w-full bg-gray-50 overflow-hidden relative">
                   <img src={prod.img} className="w-full h-full object-cover" alt={prod.name} />
                 </div>
