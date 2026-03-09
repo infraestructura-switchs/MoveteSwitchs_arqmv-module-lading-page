@@ -12,6 +12,7 @@ interface ProductGridProps {
   categoryOptions: CategoryOption[];
   onAddToCart: (product: ProductType, qty: number, comment: string) => void;
   primaryColor: string;
+  onViewDetails?: (product: ProductType) => void;
 }
 
 export const ProductGrid: React.FC<ProductGridProps> = ({
@@ -23,6 +24,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   categoryOptions,
   onAddToCart,
   primaryColor,
+  onViewDetails,
 }) => {
   if (activeCategory === "all" && !searchTerm && !sortOption) {
     if (!allProducts) {
@@ -47,6 +49,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                         product={product}
                         onAddToCart={onAddToCart}
                         primaryColor={primaryColor}
+                        onViewDetails={onViewDetails}
                       />
                     ))}
                   </div>
@@ -66,6 +69,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
               product={product}
               onAddToCart={onAddToCart}
               primaryColor={primaryColor}
+              onViewDetails={onViewDetails}
             />
           ))
         : null}

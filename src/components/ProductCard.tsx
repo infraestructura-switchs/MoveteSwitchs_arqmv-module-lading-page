@@ -7,6 +7,8 @@ interface ProductCardProps {
   product: ProductType;
   onAddToCart: (product: ProductType, quantity: number, comment: string) => void;
   primaryColor: string;
+  /** optional handler when the card is clicked to view details */
+  onViewDetails?: (product: ProductType) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -18,8 +20,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
+  const handleCardClick = () => {
+    if (onViewDetails) {
+      onViewDetails(product);
+    }
+  };
+
   return (
-    <div className="flex items-center bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border border-gray-100 p-3 sm:p-4 min-h-[120px]">
+    <div
+      onClick={handleCardClick}
+      className="flex items-center bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border border-gray-100 p-3 sm:p-4 min-h-[120px] cursor-pointer"
+    >
       <img
         src={product.image}
         alt={product.productName}
@@ -43,7 +54,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           <button
-            onClick={handleOpenModal}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenModal();
+            }}
             className="ml-2 flex items-center justify-center rounded-full border-2 border-[#db3434] text-[#db3434] hover:bg-[#ffe5d0] transition-colors w-10 h-10 sm:w-9 sm:h-9"
             aria-label="Agregar"
             title="Agregar"

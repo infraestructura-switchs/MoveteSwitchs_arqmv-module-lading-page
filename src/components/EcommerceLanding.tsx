@@ -3,6 +3,8 @@ import { ProductGrid } from "./ProductGrid";
 import { SortOptions } from "./SortOptions";
 import { CompanyType } from "../types/companyType";
 import { ProductType, ProductsResponse } from "../types/productsType";
+import { useState } from "react";
+import { ProductDetail } from "./ProductDetail";
 
 export type FeaturedCategory = {
   value: string;
@@ -53,6 +55,25 @@ export const EcommerceLanding = ({
   searchTerm,
   onOpenCart,
 }: EcommerceLandingProps) => {
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
+
+  const handleViewDetails = (product: ProductType) => {
+    setSelectedProduct(product);
+  };
+
+  const handleBack = () => {
+    setSelectedProduct(null);
+  };
+
+  if (selectedProduct) {
+    return (
+      <ProductDetail
+        product={selectedProduct}
+        onBack={handleBack}
+        onAddToCart={onAddToCart}
+      />
+    );
+  }
   const mockHeroBanners = [
     "https://multi-catalogo.encatalogo.com/./imagenes_banners/pantalones.png",
     "https://multi-catalogo.encatalogo.com/./imagenes_banners/banneeer%202.png",
@@ -206,6 +227,7 @@ export const EcommerceLanding = ({
                 categoryOptions={categoryOptions}
                 onAddToCart={onAddToCart}
                 primaryColor={primaryColor}
+                onViewDetails={handleViewDetails}
               />
               {products.length === 0 ? (
                 <div className="rounded-2xl bg-white p-10 text-center text-gray-500 shadow-sm border border-gray-100">
