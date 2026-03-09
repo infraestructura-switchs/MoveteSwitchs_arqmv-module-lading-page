@@ -56,10 +56,34 @@ export const EcommerceLanding = ({
   onOpenCart,
 }: EcommerceLandingProps) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
+  const [highlightedIdx, setHighlightedIdx] = useState<number | null>(null);
 
   const handleViewDetails = (product: ProductType) => {
     console.debug("handleViewDetails called", product.id);
     setSelectedProduct(product);
+  };
+
+  const handleMockClick = (
+    prod: typeof mockMasVendidos[number],
+    idx: number
+  ) => {
+    console.debug("mock clicked", prod.name, idx);
+    // briefly highlight
+    setHighlightedIdx(idx);
+    setTimeout(() => setHighlightedIdx(null), 200);
+
+    // build ProductType
+    const priceNum = Number(prod.price.replace(/[.\s]/g, ""));
+    const p: ProductType = {
+      id: 10000 + idx,
+      productName: prod.name,
+      price: isNaN(priceNum) ? 0 : priceNum,
+      categoryId: 0,
+      category: prod.store,
+      image: prod.img,
+      comments: [],
+    };
+    handleViewDetails(p);
   };
 
   const handleBack = () => {
@@ -189,7 +213,23 @@ export const EcommerceLanding = ({
 
           <div className="flex overflow-x-auto gap-4 scroll-smooth hide-scrollbar pb-6 snap-x snap-mandatory">
             {mockMasVendidos.map((prod, i) => (
-              <div key={i} className="flex-shrink-0 w-44 snap-start rounded-[16px] overflow-hidden bg-white shadow-md border border-gray-100 flex flex-col relative transition">
+              <div
+                key={i}
+                onClick={() => handleMockClick(prod, i)}
+                className={`flex-shrink-0 w-44 snap-start rounded-[16px] overflow-hidden bg-white shadow-md border flex flex-col relative transition cursor-pointer ${
+                  highlightedIdx === i ? "border-2" : "border-gray-100"
+                }`}
+                style={
+                  highlightedIdx === i
+                    ? {
+                        borderColor:
+                          getContrastColor(primaryColor) === "black"
+                            ? "black"
+                            : "white",
+                      }
+                    : undefined
+                }
+              >
                 <span
                   className="absolute top-2 left-2 text-[9px] px-2 py-[2px] rounded z-10 font-bold uppercase"
                   style={{

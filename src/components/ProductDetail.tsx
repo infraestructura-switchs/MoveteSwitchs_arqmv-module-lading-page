@@ -45,7 +45,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
       {/* header with back button */}
       <div className="p-4 flex items-center border-b border-gray-200">
         <button
-          onClick={onBack}
+          onClick={handleBackClick}
           className="flex items-center text-gray-700 hover:text-gray-900"
         >
           <ArrowLeft className="w-6 h-6" />

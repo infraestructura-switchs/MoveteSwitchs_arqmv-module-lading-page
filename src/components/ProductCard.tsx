@@ -25,12 +25,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleCardClick = () => {
     console.debug("ProductCard clicked", product.id);
-    // flash highlight
+    // flash highlight and only navigate after animation so it's visible
     setJustClicked(true);
-    setTimeout(() => setJustClicked(false), 300);
-    if (onViewDetails) {
-      onViewDetails(product);
-    }
+    setTimeout(() => {
+      setJustClicked(false);
+      if (onViewDetails) {
+        onViewDetails(product);
+      }
+    }, 200); // slightly shorter than flash duration
   };
 
   return (
