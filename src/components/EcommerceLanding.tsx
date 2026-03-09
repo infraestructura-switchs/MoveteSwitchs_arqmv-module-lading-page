@@ -58,6 +58,7 @@ export const EcommerceLanding = ({
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
 
   const handleViewDetails = (product: ProductType) => {
+    console.debug("handleViewDetails called", product.id);
     setSelectedProduct(product);
   };
 

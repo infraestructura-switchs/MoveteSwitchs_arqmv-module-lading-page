@@ -33,6 +33,7 @@ export const RestaurantLanding = ({
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
 
   const handleViewDetails = (product: ProductType) => {
+    console.debug("handleViewDetails restaurant", product.id);
     setSelectedProduct(product);
   };
   const handleBack = () => setSelectedProduct(null);

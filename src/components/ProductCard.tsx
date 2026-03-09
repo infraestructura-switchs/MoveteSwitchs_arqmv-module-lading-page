@@ -21,6 +21,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const handleCloseModal = () => setIsModalOpen(false);
 
   const handleCardClick = () => {
+    console.debug("ProductCard clicked", product.id);
     if (onViewDetails) {
       onViewDetails(product);
     }
