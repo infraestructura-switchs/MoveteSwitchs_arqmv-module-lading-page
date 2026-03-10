@@ -256,10 +256,9 @@ export const EcommerceLanding = ({
           </div>
         </section>
 
-        {/* Divider before real data */}
+{/* 
         <div className="w-full h-2 bg-gray-200 my-4" />
 
-        {/* Default implementation showing catalog data obtained from services */}
         <section id="catalogo" className="w-full max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
@@ -292,9 +291,6 @@ export const EcommerceLanding = ({
               />
               {products.length === 0 ? (
                 <div className="rounded-2xl bg-white p-10 text-center text-gray-500 shadow-sm border border-gray-100">
-                  <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4M8 16l-4-4 4-4" />
-                  </svg>
                   No hay productos disponibles para esta selección actualmente.
                 </div>
               ) : null}
@@ -302,7 +298,6 @@ export const EcommerceLanding = ({
           </div>
         </section>
 
-        {/* Mobile App-like Bottom Navigation Bar */}
         <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around items-center h-16 sm:hidden z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-gray-900 pointer-events-auto">
             <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
@@ -317,7 +312,7 @@ export const EcommerceLanding = ({
             <span className="text-[10px] font-medium mt-1">Carrito</span>
           </button>
         </div>
-
+*/}
       </main>
       <style>{`
         .hide-scrollbar::-webkit-scrollbar {

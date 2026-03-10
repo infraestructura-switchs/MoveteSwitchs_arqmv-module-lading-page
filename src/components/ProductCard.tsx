@@ -7,7 +7,6 @@ interface ProductCardProps {
   product: ProductType;
   onAddToCart: (product: ProductType, quantity: number, comment: string) => void;
   primaryColor: string;
-  /** optional handler when the card is clicked to view details */
   onViewDetails?: (product: ProductType) => void;
 }
 
@@ -25,14 +24,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleCardClick = () => {
     console.debug("ProductCard clicked", product.id);
-    // flash highlight and only navigate after animation so it's visible
     setJustClicked(true);
     setTimeout(() => {
       setJustClicked(false);
       if (onViewDetails) {
         onViewDetails(product);
       }
-    }, 200); // slightly shorter than flash duration
+    }, 200); 
   };
 
   return (
@@ -55,14 +53,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div className="flex flex-col flex-1 ml-3 sm:ml-4 min-w-0 cursor-pointer">
         <div className="flex items-start justify-between gap-3 cursor-pointer">
           <div className="min-w-0">
-            <h3 className={`font-bold text-sm sm:text-base truncate ${
-                justClicked ? "bg-yellow-100" : "text-gray-800"
-              }`}>
+            <h3 className="font-bold text-sm sm:text-base truncate text-gray-800">
               {product.productName}
             </h3>
-            <span className={`text-base sm:text-lg font-bold ${
-                justClicked ? "text-blue-600" : "text-black"
-              }`}>
+            <span className="text-base sm:text-lg font-bold text-black">
               {new Intl.NumberFormat("es-CO", {
                 style: "currency",
                 currency: "COP",
@@ -88,7 +82,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           className="text-gray-500 text-xs sm:text-sm mt-1"
           style={{
             display: "-webkit-box",
-            WebkitLineClamp: 2,         // 2 líneas en móvil/desktop sin plugin
+            WebkitLineClamp: 2,      
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
           }}

@@ -2,8 +2,6 @@ import { CategorySelector, CategoryOption } from "./CategorySelector";
 import { ProductGrid } from "./ProductGrid";
 import { SortOptions } from "./SortOptions";
 import { ProductType, ProductsResponse } from "../types/productsType";
-import { useState } from "react";
-import { ProductDetail } from "./ProductDetail";
 
 export type RestaurantLandingProps = {
   categoryOptions: CategoryOption[];
@@ -30,23 +28,11 @@ export const RestaurantLanding = ({
   primaryColor,
   searchTerm,
 }: RestaurantLandingProps) => {
-  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
 
   const handleViewDetails = (product: ProductType) => {
     console.debug("handleViewDetails restaurant", product.id);
-    setSelectedProduct(product);
   };
-  const handleBack = () => setSelectedProduct(null);
 
-  if (selectedProduct) {
-    return (
-      <ProductDetail
-        product={selectedProduct}
-        onBack={handleBack}
-        onAddToCart={onAddToCart}
-      />
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-6">

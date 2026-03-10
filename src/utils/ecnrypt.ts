@@ -24,7 +24,6 @@ export const decryptData = (encryptedData: string): string => {
     const parts = encryptedData.split('.');
     if (parts.length !== 2) {
 
-      console.log('El token no tiene formato encriptado. Usando como texto plano:', encryptedData);
       return encryptedData;
     }
 

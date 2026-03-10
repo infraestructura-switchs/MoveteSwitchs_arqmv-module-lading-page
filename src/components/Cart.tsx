@@ -7,7 +7,6 @@ import { CartItem } from "../types/productsType";
 import { useDecryptData } from "../hooks/useDecrypt";
 import { BASE_URL_API } from '../constants/index';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import { useLocalStorage } from "../hooks/useLocalStorage";
 import { getCompanyIdFromUrl } from "../utils/urlParams";
 
 const URL: string = `${BASE_URL_API}`;
@@ -33,7 +32,6 @@ export const Cart: React.FC<CartProps> = ({
   const [popupButtonText, setPopupButtonText] = useState("");
   const [popupAction, setPopupAction] = useState<(() => void) | null>(null);
   const [loading, setLoading] = useState(false);
-  const [, setCartItems] = useLocalStorage<CartItem[]>("restaurant-cart", []);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("es-CO", {
@@ -79,7 +77,6 @@ export const Cart: React.FC<CartProps> = ({
   const deliveryToken = new URLSearchParams(tokenParam).get("Delivery") ?? "";
   const authToken = new URLSearchParams(tokenParam).get("token"); 
 
-  console.log("Auth Token:", authToken);
 
   const {
     decryptedData: phone,
@@ -90,15 +87,6 @@ export const Cart: React.FC<CartProps> = ({
   const {
     decryptedData: mesa,
   } = useDecryptData(mesaToken);
-
-  // clear stored cart once when the component mounts.  previously the
-  // dependency list included `setCartItems`, which is a new function on every
-  // render (returned by our `useLocalStorage` hook) and caused React to
-  // re-run the effect indefinitely.  an empty array suffices because we only
-  // want this side‑effect once.
-  useEffect(() => {
-    setCartItems([]);
-  }, [setCartItems]);
 
 
   const handleSendOrder = useCallback(async () => {
@@ -337,7 +325,7 @@ export const Cart: React.FC<CartProps> = ({
               <div className="flex items-center space-x-2">
                 <IoMdInformationCircleOutline className="h-8 w-8" />
                 <p className="text-gray-700 text-xs">
-                  Al presionar Confirmar pedido, este se te enviará a WhatsApp.
+                  Al presionar confirmar pedido, este se te enviará a WhatsApp.
                 </p>
               </div>
             </div>

@@ -4,7 +4,6 @@ import { Cart } from "./components/Cart";
 import LoadingScreen from "./components/LoadingScreen";
 import { AdminPanel } from "./components/AdminPanel";
 import { useLocalStorage } from "./hooks/useLocalStorage";
-// package.json is imported so we can display the current app version in the UI
 import pkg from "../package.json";
 import { toProductType } from "./utils/category";
 import { Category } from "./types";
@@ -34,17 +33,13 @@ import {
 import { RestaurantLanding } from "./components/RestaurantLanding";
 
 function App() {
-  // URL params are handled by a small utility module.
   const initialUrlParams = useMemo(() => parseUrlParams(), []);
 
   function getStoredUrlParamLocal(key: string): string | null {
-    // alias so that other code in this file can still call the familiar name
     return getStoredUrlParam(key);
   }
 
-  // (moved above during replacement)
 
-  // maintain a reactive copy of the parameters so components can read them
   const [urlParams, setUrlParams] = useState<Record<string, string>>(initialUrlParams);
   const userToken = urlParams.userToken || "";
   const qr = urlParams.qr || "";
@@ -173,8 +168,6 @@ function App() {
   const token = getStoredUrlParamLocal("token") ?? "";
   const companyId = getStoredUrlParamLocal("companyId") ?? "";
 
-  // if the url params gave us any company-related values, merge them
-  // into the configuration state.  this hook runs only once at mount.
   useEffect(() => {
     const updates: Partial<CompanyType> = {};
     if (initialUrlParams.productNameCompany) {
@@ -188,8 +181,6 @@ function App() {
       setConfig((prev) => ({ ...prev, ...updates }));
     }
 
-    // also reflect the parsed values in urlParams state (in case components
-    // read it later) and re-store in localStorage for persistence.
     setUrlParams(initialUrlParams);
     storeUrlParams(initialUrlParams);
   }, [initialUrlParams, setConfig, setUrlParams]);
@@ -216,11 +207,7 @@ function App() {
     }
   }, [company, setConfig]);
 
-  // choose a sensible page title depending on whether the configuration has
-  // been successfully loaded.  When we have a valid company and a token we
-  // use the company product name; otherwise fall back to the generic
-  // "Movete" brand.  This keeps 404/unauthorized screens from showing an
-  // unrelated name like the one that happened to be stored in localStorage.
+
   useEffect(() => {
     const defaultTitle = "Movete";
     const companyName = config.productNameCompany || defaultTitle;
@@ -235,13 +222,8 @@ function App() {
     }
   }, [hasToken, config.productNameCompany]);
 
-  // whenever the logo URL stored in configuration changes we push it
-  // to the <head> element so that the browser updates the favicon.  A
-  // null or empty value resets the link to the static default image.
+
   useEffect(() => {
-    // update favicon whenever the logo URL changes; fall back to static
-    // default when no logo is available or when we are not properly
-    // authenticated.
     const defaultHref = "/assets/image/default-favicon.png";
     console.debug("favicon effect run; hasToken=", hasToken, "logoUrl=", config.logoUrl);
 
@@ -260,8 +242,6 @@ function App() {
       link.href = config.logoUrl;
       console.debug("set favicon to logoUrl", config.logoUrl);
     } else {
-      // when we don't have a valid company (e.g. 404 or missing token)
-      // always show the generic favicon
       link.href = defaultHref;
       console.debug("set favicon to default", defaultHref);
     }
@@ -269,18 +249,17 @@ function App() {
 
 useEffect(() => {
   if (fetchedRef.current) return;
+
+  const freshParams = parseUrlParams();
+  const token = freshParams.token ?? getStoredUrlParam("token") ?? "";
+  const companyId = freshParams.companyId ?? getStoredUrlParam("companyId") ?? "";
+
+  if (!token) return;
+
   fetchedRef.current = true;
-
-  // diagnostic logging of the parameters we are using
-  console.debug("initialUrlParams in effect", initialUrlParams);
-  console.debug("derived token/companyId", { token, companyId });
-  console.debug("additional url params", { userToken, qr, mesa });
-
   (async () => {
     try {
-      // if we were able to read companyId from the query/hash, pass it along
-      // to the API call as well.  this prevents the helper from returning
-      // `null` when the id is only stored in the hash fragment.
+
       let parsedCompanyId: number | undefined = undefined;
       if (companyId) {
         const n = Number(companyId);
@@ -300,7 +279,6 @@ useEffect(() => {
         });
       }
 
-      // remember the full map so the "all" category rendering logic works
       console.debug("normalized products map", normalized);
       setAllProducts(normalized);
 
@@ -310,21 +288,21 @@ useEffect(() => {
 
       setProducts(all);
 
-      const catKeys = Object.keys(normalized);
-      const dynamicOptions = [
-        { value: "all", label: "Ver todo", img: todosImg },
-        ...categoryOptions.filter(
-          (opt) => opt.value !== "all" && catKeys.includes(opt.value)
-        ),
-        ...catKeys
-          .filter((key) => !categoryOptions.some((opt) => opt.value === key))
-          .map((key) => ({
-            value: key,
-            label: key.charAt(0).toUpperCase() + key.slice(1).toLowerCase(),
-            img: categoryImages[key] || popularImg,
-          })),
-      ];
-
+const catKeys = Object.keys(normalized);
+const dynamicOptions = [
+  { value: "all", label: "Ver todo", img: todosImg },
+  ...catKeys.map((key) => {
+    const baseKey = key.split(/\s*[-–]\s*/)[0].trim().toUpperCase();
+    const existing = categoryOptions.find(
+      (opt) => opt.value === key || opt.value === baseKey
+    );
+    return {
+      value: key,
+      label: existing?.label || (baseKey.charAt(0).toUpperCase() + baseKey.slice(1).toLowerCase()),
+      img: existing?.img || categoryImages[baseKey] || categoryImages[key] || popularImg,
+    };
+  }),
+];
       setCategoryOptions(dynamicOptions);
       setActiveCategory("all");
 
@@ -339,18 +317,7 @@ useEffect(() => {
       }, 1000);
     }
   })();
-}, [
-  categoryImages,
-  categoryOptions,
-  companyId,
-  initialUrlParams,
-  mesa,
-  qr,
-  token,
-  userToken,
-]); 
-
-
+}, [initialUrlParams]);
 
 
   const fetchSortedFromBackend = useCallback(async (
@@ -572,7 +539,6 @@ useEffect(() => {
       } catch (err) {
         const errObj = err as { name?: string };
         if (errObj?.name === "AbortError") return;
-        console.error("Error en búsqueda:", err);
         setProducts([]);
       }
     }, 300);
