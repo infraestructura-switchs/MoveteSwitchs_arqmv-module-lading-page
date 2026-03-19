@@ -2,6 +2,8 @@ import { CategorySelector, CategoryOption } from "./CategorySelector";
 import { ProductGrid } from "./ProductGrid";
 import { SortOptions } from "./SortOptions";
 import { ProductType, ProductsResponse } from "../types/productsType";
+import ProductModal from "./ProductModal";
+import React, { useState } from "react";
 
 export type RestaurantLandingProps = {
   categoryOptions: CategoryOption[];
@@ -14,6 +16,8 @@ export type RestaurantLandingProps = {
   onAddToCart: (product: ProductType, qty: number, comment: string) => void;
   primaryColor: string;
   searchTerm: string;
+  onOpenCart?: () => void;
+  cartCount?: number;
 };
 
 export const RestaurantLanding = ({
@@ -27,11 +31,17 @@ export const RestaurantLanding = ({
   onAddToCart,
   primaryColor,
   searchTerm,
+  onOpenCart,
+  cartCount,
 }: RestaurantLandingProps) => {
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
 
   const handleViewDetails = (product: ProductType) => {
     console.debug("handleViewDetails restaurant", product.id);
+    setSelectedProduct(product);
   };
+
+  const handleCloseModal = () => setSelectedProduct(null);
 
 
   return (
@@ -56,8 +66,17 @@ export const RestaurantLanding = ({
             onAddToCart={onAddToCart}
             primaryColor={primaryColor}
             onViewDetails={handleViewDetails}
+            onOpenCart={onOpenCart}
+            cartCount={cartCount}
           />
         </div>
+        {selectedProduct && (
+          <ProductModal
+            product={selectedProduct}
+            onClose={handleCloseModal}
+            onAddToCart={onAddToCart}
+          />
+        )}
       </main>
     </div>
   );

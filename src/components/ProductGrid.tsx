@@ -2,6 +2,7 @@ import React from "react";
 import { ProductType } from "../types/productsType";
 import { CategoryOption } from "./CategorySelector";
 import { ProductCard } from "./ProductCard";
+import FloatingConfirmButton from "./FloatingConfirmButton";
 
 interface ProductGridProps {
   activeCategory: string;
@@ -13,6 +14,8 @@ interface ProductGridProps {
   onAddToCart: (product: ProductType, qty: number, comment: string) => void;
   primaryColor: string;
   onViewDetails?: (product: ProductType) => void;
+  onOpenCart?: () => void;
+  cartCount?: number;
 }
 
 export const ProductGrid: React.FC<ProductGridProps> = ({
@@ -25,7 +28,13 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onAddToCart,
   primaryColor,
   onViewDetails,
+  onOpenCart,
+  cartCount,
 }) => {
+  const itemCount = typeof cartCount === "number" ? cartCount : 0;
+  // debug: expose itemCount in console to diagnose visibility issues
+  // eslint-disable-next-line no-console
+  console.log('[debug] ProductGrid itemCount:', itemCount);
   if (activeCategory === "all" && !searchTerm && !sortOption) {
     if (!allProducts) {
       return null;
@@ -56,23 +65,31 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                 </div>
               )
           )}
+        <FloatingConfirmButton
+          count={itemCount}
+          onClick={() => onOpenCart && onOpenCart()}
+          bgColor={primaryColor}
+        />
       </>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 md:gap-6">
-      {products.length > 0
-        ? products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={onAddToCart}
-              primaryColor={primaryColor}
-              onViewDetails={onViewDetails}
-            />
-          ))
-        : null}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 md:gap-6">
+        {products.length > 0
+          ? products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={onAddToCart}
+                primaryColor={primaryColor}
+                onViewDetails={onViewDetails}
+              />
+            ))
+          : null}
+      </div>
+      <FloatingConfirmButton count={itemCount} onClick={() => onOpenCart && onOpenCart()} bgColor={primaryColor} />
+    </>
   );
 };

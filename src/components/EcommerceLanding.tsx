@@ -35,6 +35,7 @@ export type EcommerceLandingProps = {
   primaryColor: string;
   searchTerm: string;
   onOpenCart: () => void;
+  cartCount?: number;
 };
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -54,6 +55,7 @@ export const EcommerceLanding = ({
   primaryColor,
   searchTerm,
   onOpenCart,
+  cartCount,
 }: EcommerceLandingProps) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
   const [highlightedIdx, setHighlightedIdx] = useState<number | null>(null);
@@ -288,6 +290,7 @@ export const EcommerceLanding = ({
                 onAddToCart={onAddToCart}
                 primaryColor={primaryColor}
                 onViewDetails={handleViewDetails}
+                cartCount={cartCount}
               />
               {products.length === 0 ? (
                 <div className="rounded-2xl bg-white p-10 text-center text-gray-500 shadow-sm border border-gray-100">

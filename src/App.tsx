@@ -190,6 +190,10 @@ function App() {
     0
   );
 
+  // debug: expose cartItemsCount to browser console
+  // eslint-disable-next-line no-console
+  console.log('[debug] App cartItemsCount:', cartItemsCount);
+
   useEffect(() => {
     if (company) {
       setConfig((prev) => ({
@@ -634,7 +638,8 @@ const dynamicOptions = [
           onAddToCart={addToCart}
           primaryColor={primaryColor}
           searchTerm={searchTerm}
-          onOpenCart={() => setIsCartOpen(true)}
+            onOpenCart={() => setIsCartOpen(true)}
+            cartCount={cartItemsCount}
         />
       ) : (
         <RestaurantLanding
@@ -648,6 +653,8 @@ const dynamicOptions = [
           onAddToCart={addToCart}
           primaryColor={primaryColor}
           searchTerm={searchTerm}
+            onOpenCart={() => setIsCartOpen(true)}
+            cartCount={cartItemsCount}
         />
       )}
       <Cart

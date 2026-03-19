@@ -30,5 +30,31 @@ export const toProductType = (p: unknown): ProductType => {
     image: (obj.image ?? obj.imgProduct ?? undefined) as string | undefined,
     quantity: typeof obj.quantity === "number" ? obj.quantity : 1,
     description: (obj.description ?? undefined) as string | undefined,
+    originalPrice:
+      obj.originalPrice != null
+        ? Number(obj.originalPrice)
+        : obj.oldPrice != null
+        ? Number(obj.oldPrice)
+        : obj.priceBefore != null
+        ? Number(obj.priceBefore)
+        : obj.original_price != null
+        ? Number(obj.original_price)
+        : obj.basePrice != null
+        ? Number(obj.basePrice)
+        : obj.base_price != null
+        ? Number(obj.base_price)
+        : undefined,
+    discountAmount:
+      obj.discountAmount != null
+        ? Number(obj.discountAmount)
+        : obj.discount_amount != null
+        ? Number(obj.discount_amount)
+        : obj.discount != null
+        ? Number(obj.discount)
+        : obj.discountValue != null
+        ? Number(obj.discountValue)
+        : obj.discount_value != null
+        ? Number(obj.discount_value)
+        : undefined,
   };
 };
