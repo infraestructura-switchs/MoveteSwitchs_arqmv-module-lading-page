@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, forwardRef, useImperativeHandle } from "react";
 import { X, Plus } from "lucide-react";
 import { IoMdInformationCircleOutline } from "react-icons/io";
 import { FaMinus } from 'react-icons/fa';
@@ -19,14 +19,12 @@ interface CartProps {
   onUpdateQuantity: (id: string, quantity: number) => void;
   onClearCart: () => void;
 }
+export type CartRef = {
+  sendOrder: () => Promise<void>;
+};
 
-export const Cart: React.FC<CartProps> = ({
-  isOpen,
-  onClose,
-  items,
-  onUpdateQuantity,
-  onClearCart,
-}) => {
+export const Cart = forwardRef<CartRef, CartProps>(
+  ({ isOpen, onClose, items, onUpdateQuantity, onClearCart }, ref) => {
   const [openPopup, setOpenPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
   const [popupButtonText, setPopupButtonText] = useState("");
@@ -209,6 +207,12 @@ export const Cart: React.FC<CartProps> = ({
     authToken,
   ]);
 
+  useImperativeHandle(ref, () => ({
+    sendOrder: async () => {
+      await handleSendOrder();
+    },
+  }));
+
   useEffect(() => {
     if (openPopup && popupButtonText === "Ir a WhatsApp") {
       onClearCart();
@@ -374,5 +378,5 @@ export const Cart: React.FC<CartProps> = ({
       )}
     </div>
   );
-};
+});
 

@@ -35,6 +35,7 @@ export type EcommerceLandingProps = {
   primaryColor: string;
   searchTerm: string;
   onOpenCart: () => void;
+  onDirectConfirm?: () => void;
   cartCount?: number;
 };
 
@@ -290,6 +291,8 @@ export const EcommerceLanding = ({
                 onAddToCart={onAddToCart}
                 primaryColor={primaryColor}
                 onViewDetails={handleViewDetails}
+                onOpenCart={onOpenCart}
+                onDirectConfirm={onDirectConfirm}
                 cartCount={cartCount}
               />
               {products.length === 0 ? (

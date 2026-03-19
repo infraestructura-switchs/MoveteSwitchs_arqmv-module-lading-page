@@ -15,6 +15,7 @@ interface ProductGridProps {
   primaryColor: string;
   onViewDetails?: (product: ProductType) => void;
   onOpenCart?: () => void;
+  onDirectConfirm?: () => void;
   cartCount?: number;
 }
 
@@ -67,7 +68,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           )}
         <FloatingConfirmButton
           count={itemCount}
-          onClick={() => onOpenCart && onOpenCart()}
+          onClick={() => (onDirectConfirm ? onDirectConfirm() : onOpenCart && onOpenCart())}
           bgColor={primaryColor}
         />
       </>
@@ -89,7 +90,11 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             ))
           : null}
       </div>
-      <FloatingConfirmButton count={itemCount} onClick={() => onOpenCart && onOpenCart()} bgColor={primaryColor} />
+      <FloatingConfirmButton
+        count={itemCount}
+        onClick={() => (onDirectConfirm ? onDirectConfirm() : onOpenCart && onOpenCart())}
+        bgColor={primaryColor}
+      />
     </>
   );
 };

@@ -17,6 +17,7 @@ export type RestaurantLandingProps = {
   primaryColor: string;
   searchTerm: string;
   onOpenCart?: () => void;
+  onDirectConfirm?: () => void;
   cartCount?: number;
 };
 
@@ -66,8 +67,9 @@ export const RestaurantLanding = ({
             onAddToCart={onAddToCart}
             primaryColor={primaryColor}
             onViewDetails={handleViewDetails}
-            onOpenCart={onOpenCart}
-            cartCount={cartCount}
+                      onOpenCart={onOpenCart}
+                      onDirectConfirm={onOpenCart && (() => onOpenCart())}
+                      cartCount={cartCount}
           />
         </div>
         {selectedProduct && (

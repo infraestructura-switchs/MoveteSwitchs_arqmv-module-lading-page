@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Header } from "./components/Header";
-import { Cart } from "./components/Cart";
+import { Cart, CartRef } from "./components/Cart";
 import LoadingScreen from "./components/LoadingScreen";
 import { AdminPanel } from "./components/AdminPanel";
 import { useLocalStorage } from "./hooks/useLocalStorage";
@@ -161,6 +161,7 @@ function App() {
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const cartRef = useRef<CartRef | null>(null);
   const companyDisplayName = config.productNameCompany || "Movete";
   const primaryColor = config.primaryColor || "#0f172a";
 
@@ -641,6 +642,7 @@ const dynamicOptions = [
           primaryColor={primaryColor}
           searchTerm={searchTerm}
             onOpenCart={() => setIsCartOpen(true)}
+            onDirectConfirm={() => cartRef.current?.sendOrder()}
             cartCount={cartItemsCount}
         />
       ) : (
@@ -656,10 +658,12 @@ const dynamicOptions = [
           primaryColor={primaryColor}
           searchTerm={searchTerm}
             onOpenCart={() => setIsCartOpen(true)}
+            onDirectConfirm={() => cartRef.current?.sendOrder()}
             cartCount={cartItemsCount}
         />
       )}
       <Cart
+        ref={cartRef}
         isOpen={isCartOpen}
         items={cartItems}
         onClose={() => setIsCartOpen(false)}
