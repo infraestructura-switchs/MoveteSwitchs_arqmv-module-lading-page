@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { CompanyType } from "../types/companyType";
+import { getUrlParam } from "../utils/urlParams";
 
 const logoImg_chuzo_ivan = "/assets/icons/Logo_chuzo_ivan.png";
 // the backend sometimes returns a logoUrl but if we fall back to
@@ -32,23 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // read from the shared storage instead of reparsing the URL every time
-    try {
-      const stored = window.localStorage.getItem("urlParams");
-      if (stored) {
-        const obj = JSON.parse(stored);
-        setCompanyId(obj.companyId ?? null);
-      }
-    } catch {
-      // fallback to parsing if storage isn't available
-      const rawHash = window.location.hash || "";
-      const cleanedHash = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
-      const tokenParam =
-        window.location.search || cleanedHash.replace(/^\?/, "") || "";
-      const params = new URLSearchParams(tokenParam);
-      const id = params.get("companyId");
-      setCompanyId(id);
-    }
+    const id = getUrlParam("companyId");
+    setCompanyId(id);
   }, []);
 
   const getLogoAndStyles = () => {

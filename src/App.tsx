@@ -23,7 +23,7 @@ import { useCompanyLocal } from "./hooks/useCompanyLocal";
 import GenericScreen from "./components/GenericScreen";
 
 // refactored units
-import { parseUrlParams, storeUrlParams, getStoredUrlParam } from "./utils/urlParams";
+import { storeUrlParams, getStoredUrlParam, getAllStoredParams } from "./utils/urlParams";
 import { CategoryOption } from "./components/CategorySelector";
 import {
   EcommerceLanding,
@@ -33,7 +33,7 @@ import {
 import { RestaurantLanding } from "./components/RestaurantLanding";
 
 function App() {
-  const initialUrlParams = useMemo(() => parseUrlParams(), []);
+  const initialUrlParams = useMemo(() => getAllStoredParams(), []);
 
   function getStoredUrlParamLocal(key: string): string | null {
     return getStoredUrlParam(key);
@@ -41,9 +41,8 @@ function App() {
 
 
   const [urlParams, setUrlParams] = useState<Record<string, string>>(initialUrlParams);
-  const userToken = urlParams.userToken || "";
-  const qr = urlParams.qr || "";
-  const mesa = urlParams.mesa || "";
+  // urlParams are available via centralized storage; individual components
+  // should use `getUrlParam`/helpers when needed. Avoid unused vars here.
   const templateLanding =
     urlParams.templateLanding === "EcommerceLanding"
       ? "EcommerceLanding"
@@ -165,7 +164,6 @@ function App() {
   const companyDisplayName = config.productNameCompany || "Movete";
   const primaryColor = config.primaryColor || "#0f172a";
 
-  const token = getStoredUrlParamLocal("token") ?? "";
   const companyId = getStoredUrlParamLocal("companyId") ?? "";
 
   useEffect(() => {
@@ -254,11 +252,15 @@ function App() {
 useEffect(() => {
   if (fetchedRef.current) return;
 
-  const freshParams = parseUrlParams();
+  const freshParams = getAllStoredParams();
   const token = freshParams.token ?? getStoredUrlParam("token") ?? "";
   const companyId = freshParams.companyId ?? getStoredUrlParam("companyId") ?? "";
 
-  if (!token) return;
+  if (!token) {
+    setHasToken(false);
+    setLoading(false);
+    return;
+  }
 
   fetchedRef.current = true;
   (async () => {

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import pkg from "../../package.json";
+import { getUrlParam } from "../utils/urlParams";
 
 const LoadingScreen: React.FC = () => {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true); // 👈
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("companyId");
+    const id = getUrlParam("companyId");
     setCompanyId(id);
     setIsLoading(false);
   }, []);

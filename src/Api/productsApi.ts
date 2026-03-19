@@ -2,7 +2,7 @@ import axios from 'axios';
 import {BASE_URL_API} from '../constants/index';
 import { ApiResponse,SearchParams,ProductType,SortParams} from '../types/productsType';
 import { toProductType } from "../utils/category";
-import { getCompanyIdFromUrl } from "../utils/urlParams";
+import { getUrlParam } from "../utils/urlParams";
 
 const URL: string = `${BASE_URL_API}/product`;
 //const URL: string = `/api/back-whatsapp-qr-app/product`;
@@ -15,7 +15,11 @@ export const getProductsByCompany = async (
     throw new Error("Token de autenticación no proporcionado");
   }
 
-  const id = companyId ?? getCompanyIdFromUrl();
+  let id = companyId;
+  if (!id) {
+    const cid = getUrlParam("companyId");
+    if (cid) id = Number(cid);
+  }
   if (!id) throw new Error("No se encontró companyId");
 
   try {

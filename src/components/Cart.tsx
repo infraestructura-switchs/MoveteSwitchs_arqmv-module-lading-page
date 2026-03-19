@@ -7,7 +7,7 @@ import { CartItem } from "../types/productsType";
 import { useDecryptData } from "../hooks/useDecrypt";
 import { BASE_URL_API } from '../constants/index';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import { getCompanyIdFromUrl } from "../utils/urlParams";
+import { getCompanyIdFromUrl, getUrlParam } from "../utils/urlParams";
 
 const URL: string = `${BASE_URL_API}`;
 //const URL: string = `/api/back-whatsapp-qr-app`;
@@ -45,37 +45,11 @@ export const Cart: React.FC<CartProps> = ({
     0
   );
 
-  // try reading from the centralised storage first
-  let tokenParam = "";
-  try {
-    const stored = window.localStorage.getItem("urlParams");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (parsed && typeof parsed === "object") {
-        const record = Object.entries(parsed as Record<string, unknown>).reduce(
-          (acc, [key, value]) => {
-            if (value != null) acc[key] = String(value);
-            return acc;
-          },
-          {} as Record<string, string>
-        );
-        tokenParam = new URLSearchParams(record).toString();
-      }
-    }
-  } catch {
-    // if anything goes wrong, fall back to parsing the URL directly
-  }
-  if (!tokenParam) {
-    const rawHash = window.location.hash || "";
-    const cleanedHash = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
-    tokenParam =
-      window.location.search || cleanedHash.replace(/^\?/, "") || "";
-  }
-  const phoneToken = new URLSearchParams(tokenParam).get("userToken") ?? "";
-  const mesaToken = new URLSearchParams(tokenParam).get("mesa") ?? "";
-  const qrToken = new URLSearchParams(tokenParam).get("qr") ?? "";
-  const deliveryToken = new URLSearchParams(tokenParam).get("Delivery") ?? "";
-  const authToken = new URLSearchParams(tokenParam).get("token"); 
+  const phoneToken = getUrlParam("userToken") ?? "";
+  const mesaToken = getUrlParam("mesa") ?? "";
+  const qrToken = getUrlParam("qr") ?? "";
+  const deliveryToken = getUrlParam("Delivery") ?? "";
+  const authToken = getUrlParam("token"); 
 
 
   const {
@@ -126,15 +100,19 @@ export const Cart: React.FC<CartProps> = ({
 
     const orderItems = items.map((i) => ({
       productId: i.product.id.toString(),
+      unitPrice: i.product.price,
       qty: i.quantity,
       comment: i.comment || "",
     }));
 
     console.log("Order Items:", orderItems);
 
+    const rawCompanyId = getUrlParam("companyId");
+    const parsedCompanyId = rawCompanyId ? Number(rawCompanyId) : undefined;
+
     const orderData = {
       phone,
-      companyId: getCompanyIdFromUrl(),
+      companyId: parsedCompanyId,
       items: orderItems,
       total,
       restaurantTable: mesa,
