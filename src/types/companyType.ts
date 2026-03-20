@@ -1,5 +1,5 @@
 export interface CompanyType {
-  companyExternalId: number;
+  externalCompanyId: number;
   productNameCompany: string;
   logoUrl: string | null;
   primaryColor: string;

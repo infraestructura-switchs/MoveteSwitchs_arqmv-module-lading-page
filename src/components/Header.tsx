@@ -52,12 +52,12 @@ export const Header: React.FC<HeaderProps> = ({
       case "238":
         return {
           logoSrc: logoImg_chuzo_ivan,
-          logoSize: "h-12 sm:h-10 w-auto", 
+      const [externalCompanyId, setExternalCompanyId] = useState<string | null>(null);
           bgColor: "#fff",
         };
       case "273":
-        return {
-          logoSrc: logoImg_buen_nino,
+        const id = getUrlParam("externalCompanyId");
+        setExternalCompanyId(id);
           logoSize: "h-16 sm:h-14 md:h-16 w-auto",
           bgColor: "#fff",
         };
@@ -71,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const { logoSrc, logoSize, bgColor } = getLogoAndStyles();
-
+        switch (externalCompanyId) {
   const buttonColor = companyExternalId === "238" 
     ? "bg-[#FF0000] hover:bg-[#e60000]" 
     : companyExternalId === "273" 
@@ -95,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="flex flex-1 justify-center sm:justify-between items-center w-full sm:w-auto sm:space-x-4 mb-4 sm:mb-0">
             <div className="relative w-full sm:max-w-md max-w-lg mx-auto">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#db3434]">
+      const buttonColor = externalCompanyId === "238" 
                 {/* always show the search icon inside the input; the previous
                     implementation attempted to use the company logo, but when
                     the image failed to load the browser rendered a camera

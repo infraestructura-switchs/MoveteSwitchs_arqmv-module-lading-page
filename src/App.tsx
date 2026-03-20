@@ -148,7 +148,7 @@ function App() {
   const [config, setConfig] = useLocalStorage<CompanyType>(
     "restaurant-config",
     {
-      companyExternalId: initialUrlParams.companyExternalId ? Number(initialUrlParams.companyExternalId) : 0,
+      externalCompanyId: initialUrlParams.externalCompanyId ? Number(initialUrlParams.externalCompanyId) : 0,
       productNameCompany: initialUrlParams.productNameCompany || "Movete",
       logoUrl: null,
       primaryColor: "#ffffffff",
@@ -165,16 +165,16 @@ function App() {
   const companyDisplayName = config.productNameCompany || "Movete";
   const primaryColor = config.primaryColor || "#0f172a";
 
-  const companyExternalId = getStoredUrlParamLocal("companyExternalId") ?? "";
+  const externalCompanyId = getStoredUrlParamLocal("externalCompanyId") ?? "";
 
   useEffect(() => {
     const updates: Partial<CompanyType> = {};
     if (initialUrlParams.productNameCompany) {
       updates.productNameCompany = initialUrlParams.productNameCompany;
     }
-    if (initialUrlParams.companyExternalId) {
-      const n = Number(initialUrlParams.companyExternalId);
-      if (!isNaN(n)) updates.companyExternalId = n;
+    if (initialUrlParams.externalCompanyId) {
+      const n = Number(initialUrlParams.externalCompanyId);
+      if (!isNaN(n)) updates.externalCompanyId = n;
     }
     if (Object.keys(updates).length > 0) {
       setConfig((prev) => ({ ...prev, ...updates }));
@@ -196,7 +196,7 @@ function App() {
   useEffect(() => {
     if (company) {
       setConfig((prev) => ({
-        companyExternalId: company.companyExternalId ?? prev.companyExternalId,
+        externalCompanyId: company.externalCompanyId ?? prev.externalCompanyId,
         productNameCompany:
           company.productNameCompany || prev.productNameCompany || "Movete",
         logoUrl: company.logoUrl ?? prev.logoUrl,
@@ -255,7 +255,7 @@ useEffect(() => {
 
   const freshParams = getAllStoredParams();
   const token = freshParams.token ?? getStoredUrlParam("token") ?? "";
-  const companyExternalId = freshParams.companyExternalId ?? getStoredUrlParam("companyExternalId") ?? "";
+  const externalCompanyId = freshParams.externalCompanyId ?? getStoredUrlParam("externalCompanyId") ?? "";
 
   if (!token) {
     setHasToken(false);
@@ -267,16 +267,16 @@ useEffect(() => {
   (async () => {
     try {
 
-      let parsedCompanyExternalId: number | undefined = undefined;
-        if (companyExternalId) {
-          const n = Number(companyExternalId);
-          if (!isNaN(n)) parsedCompanyExternalId = n;
+      let parsedExternalCompanyId: number | undefined = undefined;
+        if (externalCompanyId) {
+          const n = Number(externalCompanyId);
+          if (!isNaN(n)) parsedExternalCompanyId = n;
         }
-        console.debug("fetching products with", { token, parsedCompanyExternalId });
+        console.debug("fetching products with", { token, parsedExternalCompanyId });
 
         const data: ApiResponse = await getProductsByCompany(
           token,
-          parsedCompanyExternalId
+          parsedExternalCompanyId
       );
       console.debug("received products payload", data);
       const normalized: ProductsResponse = {};
@@ -343,7 +343,7 @@ const dynamicOptions = [
 
     try {
       const result = await getProductsSorted({
-        companyExternalId: parseInt(companyExternalId),
+        externalCompanyId: parseInt(externalCompanyId),
         sort,
         category: categoryParam,
         name: nameValue?.trim() ? nameValue.trim() : undefined,
@@ -361,7 +361,7 @@ const dynamicOptions = [
       }
       setProducts([]);
     }
-  }, [activeCategory, companyExternalId]);
+  }, [activeCategory, externalCompanyId]);
 
   const addToCart = (
     product: ProductType,
@@ -479,7 +479,7 @@ const dynamicOptions = [
             activeCategory === "all" ? undefined : activeCategory.trim();
           try {
             const results = await searchProducts({
-              companyExternalId: parseInt(companyExternalId),
+              externalCompanyId: parseInt(externalCompanyId),
               name: searchTerm.trim(),
               category: categoryParam,
             });
@@ -497,7 +497,7 @@ const dynamicOptions = [
     fetchSortedFromBackend(opt, activeCategory, searchTerm);
   }, [
     activeCategory,
-    companyExternalId,
+    externalCompanyId,
     fetchSortedFromBackend,
     filterProducts,
     searchTerm,
@@ -535,7 +535,7 @@ const dynamicOptions = [
         const categoryParam =
           activeCategory === "all" ? undefined : activeCategory.trim();
         const results = await searchProducts({
-          companyExternalId: parseInt(companyExternalId),
+          externalCompanyId: parseInt(externalCompanyId),
           name: term,
           category: categoryParam,
           signal: controller.signal,
@@ -558,7 +558,7 @@ const dynamicOptions = [
     searchTerm,
     activeCategory,
     sortOption,
-    companyExternalId,
+    externalCompanyId,
     fetchSortedFromBackend,
     filterProducts,
   ]);

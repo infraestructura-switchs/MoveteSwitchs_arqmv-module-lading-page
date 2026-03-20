@@ -36,7 +36,7 @@ export function getCompanyIdFromUrl(): number | null {
   const tokenParam =
     window.location.search || cleanedHash.replace(/^\?/, "") || "";
   const params = new URLSearchParams(tokenParam);
-  const id = params.get("companyExternalId");
+  const id = params.get("externalCompanyId");
   return id ? Number(id) : null;
 }
 
@@ -46,7 +46,7 @@ export function getCompanyExternalIdFromUrl(): string | null {
   const tokenParam =
     window.location.search || cleanedHash.replace(/^\?/, "") || "";
   const params = new URLSearchParams(tokenParam);
-  return params.get("companyExternalId");
+  return params.get("externalCompanyId");
 }
 
 // Read a single param preferring stored values, then URL parsing
@@ -83,7 +83,7 @@ export function persistUrlParamsAndClean() {
     const keys = [
       "token",
       "userToken",
-      "companyExternalId",
+      "externalCompanyId",
       "productNameCompany",
       "qr",
       "mesa",

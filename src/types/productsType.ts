@@ -23,7 +23,7 @@ export interface CartItem {
 }
 
 export type SearchParams = {
-  companyExternalId: number;           
+  externalCompanyId: number;           
   name?: string;              
   category?: string; 
   signal?: AbortSignal;           
@@ -55,7 +55,7 @@ export interface ApiResponseRaw {
 }
 
 export type SortParams = {
-  companyExternalId: number;
+  externalCompanyId: number;
   sort: 'ASC' | 'DESC';
   category?: string;
   name?: string;          

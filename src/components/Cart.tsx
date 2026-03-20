@@ -105,12 +105,12 @@ export const Cart = forwardRef<CartRef, CartProps>(
 
     console.log("Order Items:", orderItems);
 
-    const rawCompanyExternalId = getUrlParam("companyExternalId");
-    const parsedCompanyExternalId = rawCompanyExternalId ? Number(rawCompanyExternalId) : undefined;
+    const rawExternalCompanyId = getUrlParam("externalCompanyId");
+    const parsedExternalCompanyId = rawExternalCompanyId ? Number(rawExternalCompanyId) : undefined;
 
     const orderData = {
       phone,
-      companyExternalId: parsedCompanyExternalId,
+      externalCompanyId: parsedExternalCompanyId,
       items: orderItems,
       total,
       restaurantTable: mesa,
@@ -159,22 +159,22 @@ export const Cart = forwardRef<CartRef, CartProps>(
         throw new Error("No se pudo enviar el pedido");
       }
       // Obtener companyId del token desencriptado o del orderData
-      let companyExternalId = null;
+      let externalCompanyId = null;
       if (authToken) {
         try {
           // Decodificar el payload del JWT
           const payload = JSON.parse(atob(authToken.split('.')[1]));
-          companyExternalId = payload.companyExternalId ?? payload.companyId;
+          externalCompanyId = payload.externalCompanyId ?? payload.companyId;
         } catch (e) {
           console.warn('No se pudo decodificar el token:', e);
         }
       }
       // Fallback si no se pudo decodificar el token
-      if (!companyExternalId) {
-        companyExternalId = orderData.companyExternalId;
+      if (!externalCompanyId) {
+        externalCompanyId = orderData.externalCompanyId;
       }
       let whatsappNumber = "573128362367";
-      const numericCompany = Number(companyExternalId);
+      const numericCompany = Number(externalCompanyId);
       if (numericCompany === 238) {
         whatsappNumber = "573128362367";
       } else if (numericCompany === 273) {
