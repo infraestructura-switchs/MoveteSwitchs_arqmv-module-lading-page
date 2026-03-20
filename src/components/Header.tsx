@@ -2,6 +2,10 @@ import React, { useRef, useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { CompanyType } from "../types/companyType";
 import { getUrlParam } from "../utils/urlParams";
+import React, { useRef, useState, useEffect } from "react";
+import { Search, X } from "lucide-react";
+import { CompanyType } from "../types/companyType";
+import { getUrlParam } from "../utils/urlParams";
 
 const logoImg_chuzo_ivan = "/assets/icons/Logo_chuzo_ivan.png";
 // the backend sometimes returns a logoUrl but if we fall back to
@@ -29,12 +33,12 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   searchValue = "",
 }) => {
-  const [companyExternalId, setCompanyExternalId] = useState<string | null>(null);
+  const [externalCompanyId, setExternalCompanyId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const id = getUrlParam("companyExternalId");
-    setCompanyExternalId(id);
+    const id = getUrlParam("externalCompanyId");
+    setExternalCompanyId(id);
   }, []);
 
   const getLogoAndStyles = () => {
@@ -48,16 +52,16 @@ export const Header: React.FC<HeaderProps> = ({
       };
     }
 
-    switch (companyExternalId) {
+    switch (externalCompanyId) {
       case "238":
         return {
           logoSrc: logoImg_chuzo_ivan,
-      const [externalCompanyId, setExternalCompanyId] = useState<string | null>(null);
+          logoSize: "h-12 sm:h-10 w-auto",
           bgColor: "#fff",
         };
       case "273":
-        const id = getUrlParam("externalCompanyId");
-        setExternalCompanyId(id);
+        return {
+          logoSrc: logoImg_buen_nino,
           logoSize: "h-16 sm:h-14 md:h-16 w-auto",
           bgColor: "#fff",
         };
@@ -71,12 +75,12 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const { logoSrc, logoSize, bgColor } = getLogoAndStyles();
-        switch (externalCompanyId) {
-  const buttonColor = companyExternalId === "238" 
-    ? "bg-[#FF0000] hover:bg-[#e60000]" 
-    : companyExternalId === "273" 
+
+  const buttonColor = externalCompanyId === "238"
+    ? "bg-[#FF0000] hover:bg-[#e60000]"
+    : externalCompanyId === "273"
     ? "bg-[#7CA668] hover:bg-[#6B8B59]"
-    : "bg-[#7CA668] hover:bg-[#7CA668]"; 
+    : "bg-[#7CA668] hover:bg-[#7CA668]";
 
   return (
     <header
@@ -95,7 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="flex flex-1 justify-center sm:justify-between items-center w-full sm:w-auto sm:space-x-4 mb-4 sm:mb-0">
             <div className="relative w-full sm:max-w-md max-w-lg mx-auto">
-      const buttonColor = externalCompanyId === "238" 
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#db3434]">
                 {/* always show the search icon inside the input; the previous
                     implementation attempted to use the company logo, but when
                     the image failed to load the browser rendered a camera
