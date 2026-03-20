@@ -30,6 +30,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   primaryColor,
   onViewDetails,
   onOpenCart,
+  onDirectConfirm,
   cartCount,
 }) => {
   const itemCount = typeof cartCount === "number" ? cartCount : 0;

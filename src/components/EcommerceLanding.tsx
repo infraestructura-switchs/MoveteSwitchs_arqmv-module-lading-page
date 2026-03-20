@@ -56,6 +56,7 @@ export const EcommerceLanding = ({
   primaryColor,
   searchTerm,
   onOpenCart,
+  onDirectConfirm,
   cartCount,
 }: EcommerceLandingProps) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);

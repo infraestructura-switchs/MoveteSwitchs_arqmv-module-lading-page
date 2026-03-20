@@ -33,6 +33,7 @@ export const RestaurantLanding = ({
   primaryColor,
   searchTerm,
   onOpenCart,
+  onDirectConfirm,
   cartCount,
 }: RestaurantLandingProps) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
