@@ -46,7 +46,7 @@ export const Cart = forwardRef<CartRef, CartProps>(
   const phoneToken = getUrlParam("userToken") ?? "";
   const mesaToken = getUrlParam("mesa") ?? "";
   const qrToken = getUrlParam("qr") ?? "";
-  const deliveryToken = getUrlParam("Delivery") ?? "";
+  const deliveryToken = getUrlParam("delivery") ?? "";
   const authToken = getUrlParam("token"); 
 
 
