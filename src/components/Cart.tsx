@@ -7,7 +7,7 @@ import { CartItem } from "../types/productsType";
 import { useDecryptData } from "../hooks/useDecrypt";
 import { BASE_URL_API } from '../constants/index';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import { getCompanyIdFromUrl, getUrlParam } from "../utils/urlParams";
+import { getUrlParam } from "../utils/urlParams";
 
 const URL: string = `${BASE_URL_API}`;
 //const URL: string = `/api/back-whatsapp-qr-app`;
@@ -105,12 +105,12 @@ export const Cart = forwardRef<CartRef, CartProps>(
 
     console.log("Order Items:", orderItems);
 
-    const rawCompanyId = getUrlParam("companyId");
-    const parsedCompanyId = rawCompanyId ? Number(rawCompanyId) : undefined;
+    const rawCompanyExternalId = getUrlParam("companyExternalId");
+    const parsedCompanyExternalId = rawCompanyExternalId ? Number(rawCompanyExternalId) : undefined;
 
     const orderData = {
       phone,
-      companyId: parsedCompanyId,
+      companyExternalId: parsedCompanyExternalId,
       items: orderItems,
       total,
       restaurantTable: mesa,
@@ -159,24 +159,25 @@ export const Cart = forwardRef<CartRef, CartProps>(
         throw new Error("No se pudo enviar el pedido");
       }
       // Obtener companyId del token desencriptado o del orderData
-      let companyId = null;
+      let companyExternalId = null;
       if (authToken) {
         try {
           // Decodificar el payload del JWT
           const payload = JSON.parse(atob(authToken.split('.')[1]));
-          companyId = payload.companyId;
+          companyExternalId = payload.companyExternalId ?? payload.companyId;
         } catch (e) {
           console.warn('No se pudo decodificar el token:', e);
         }
       }
       // Fallback si no se pudo decodificar el token
-      if (!companyId) {
-        companyId = orderData.companyId;
+      if (!companyExternalId) {
+        companyExternalId = orderData.companyExternalId;
       }
       let whatsappNumber = "573128362367";
-      if (companyId === 238) {
+      const numericCompany = Number(companyExternalId);
+      if (numericCompany === 238) {
         whatsappNumber = "573128362367";
-      } else if (companyId === 273) {
+      } else if (numericCompany === 273) {
         whatsappNumber = "573180389934";
       }
       window.location.href = `https://wa.me/${whatsappNumber}`;

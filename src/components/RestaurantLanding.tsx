@@ -68,7 +68,7 @@ export const RestaurantLanding = ({
             primaryColor={primaryColor}
             onViewDetails={handleViewDetails}
                       onOpenCart={onOpenCart}
-                      onDirectConfirm={onOpenCart && (() => onOpenCart())}
+                      onDirectConfirm={onDirectConfirm}
                       cartCount={cartCount}
           />
         </div>

@@ -3,12 +3,12 @@ import pkg from "../../package.json";
 import { getUrlParam } from "../utils/urlParams";
 
 const LoadingScreen: React.FC = () => {
-  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [companyExternalId, setCompanyExternalId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true); // 👈
 
   useEffect(() => {
-    const id = getUrlParam("companyId");
-    setCompanyId(id);
+    const id = getUrlParam("companyExternalId");
+    setCompanyExternalId(id);
     setIsLoading(false);
   }, []);
 
@@ -26,7 +26,7 @@ const LoadingScreen: React.FC = () => {
   }
 
   const getLogoAndStyles = () => {
-    switch (companyId) {
+    switch (companyExternalId) {
       case "238":
         return {
           bgColor: "#ea3737",

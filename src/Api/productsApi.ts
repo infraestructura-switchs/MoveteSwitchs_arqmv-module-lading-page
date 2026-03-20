@@ -9,18 +9,18 @@ const URL: string = `${BASE_URL_API}/product`;
 
 export const getProductsByCompany = async (
   token: string,
-  companyId?: number
+  companyExternalId?: number
 ): Promise<ApiResponse> => {
   if (!token) {
     throw new Error("Token de autenticación no proporcionado");
   }
 
-  let id = companyId;
+  let id = companyExternalId;
   if (!id) {
-    const cid = getUrlParam("companyId");
+    const cid = getUrlParam("companyExternalId");
     if (cid) id = Number(cid);
   }
-  if (!id) throw new Error("No se encontró companyId");
+  if (!id) throw new Error("No se encontró companyExternalId");
 
   try {
     const response = await axios.get(`${URL}/getProductByCompany/${id}`, {
@@ -50,9 +50,9 @@ export const getProductsByCompany = async (
 
 
 export const searchProducts = async ({
-  companyId, name, category, signal,
+  companyExternalId, name, category, signal,
 }: SearchParams): Promise<ProductType[]> => {
-  const params: Record<string, string | number> = { companyId };
+  const params: Record<string, string | number> = { companyExternalId };
   if (name && name.trim() !== '') params.name = name.trim();
   if (category && category.trim() !== '') params.category = category.trim();
 
@@ -66,13 +66,13 @@ export const searchProducts = async ({
 };
 
 export const getProductsSorted = async ({
-  companyId,
+  companyExternalId,
   sort,
   category,
   name,
   signal,
 }: SortParams): Promise<ProductType[]> => {
-  const params: Record<string, string | number> = { companyId, sort };
+  const params: Record<string, string | number> = { companyExternalId, sort };
   if (category && category.trim() !== '') params.category = category.trim();
   if (name && name.trim() !== '') params.name = name.trim();
 

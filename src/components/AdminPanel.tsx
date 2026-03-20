@@ -87,13 +87,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   }, [isOpen, onUpdateConfig]);
 
   const handleDeleteConfig = async () => {
-    if (configData && configData.companyId) {
+    if (configData && (configData as any).companyExternalId) {
       const confirmation = window.confirm(
         "¿Estás seguro de que deseas eliminar esta configuración? Esta acción no se puede deshacer."
       );
       if (confirmation) {
         try {
-          await deleteCompany(configData.companyId);
+          await deleteCompany((configData as any).companyExternalId);
           alert("Configuración eliminada correctamente.");
          
           setConfigData(null);

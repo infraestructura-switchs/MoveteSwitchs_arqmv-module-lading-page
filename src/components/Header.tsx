@@ -29,12 +29,12 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   searchValue = "",
 }) => {
-  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [companyExternalId, setCompanyExternalId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const id = getUrlParam("companyId");
-    setCompanyId(id);
+    const id = getUrlParam("companyExternalId");
+    setCompanyExternalId(id);
   }, []);
 
   const getLogoAndStyles = () => {
@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
       };
     }
 
-    switch (companyId) {
+    switch (companyExternalId) {
       case "238":
         return {
           logoSrc: logoImg_chuzo_ivan,
@@ -72,9 +72,9 @@ export const Header: React.FC<HeaderProps> = ({
 
   const { logoSrc, logoSize, bgColor } = getLogoAndStyles();
 
-  const buttonColor = companyId === "238" 
+  const buttonColor = companyExternalId === "238" 
     ? "bg-[#FF0000] hover:bg-[#e60000]" 
-    : companyId === "273" 
+    : companyExternalId === "273" 
     ? "bg-[#7CA668] hover:bg-[#6B8B59]"
     : "bg-[#7CA668] hover:bg-[#7CA668]"; 
 

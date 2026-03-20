@@ -30,9 +30,9 @@ export const getCompany = async () => {
   }
 };
 
-export const deleteCompany = async (companyId: number) => {
+export const deleteCompany = async (companyExternalId: number) => {
   try {
-    const response = await axios.delete(`${URL}/delete/${companyId}`);
+    const response = await axios.delete(`${URL}/delete/${companyExternalId}`);
     if (response.status === 200) { 
       return true;
     }
