@@ -1,9 +1,6 @@
 import axios from 'axios';
 import {BASE_URL_API} from '../constants/index';
-import { FullProductsResponse, SearchParams, ProductType, SortParams } from '../types/productsType';
-
-// Re-export types for external consumers
-export type { FullProductsResponse };
+import { ApiResponse, SearchParams, ProductType, SortParams } from '../types/productsType';
 import { toProductType } from "../utils/category";
 import { getUrlParam } from "../utils/urlParams";
 
@@ -13,7 +10,7 @@ const URL: string = `${BASE_URL_API}/product`;
 export const getProductsByCompany = async (
   token: string,
   externalCompanyId?: number
-): Promise<FullProductsResponse> => {
+): Promise<ApiResponse> => {
   if (!token) {
     throw new Error("Token de autenticación no proporcionado");
   }
@@ -26,17 +23,14 @@ export const getProductsByCompany = async (
   if (!id) throw new Error("No se encontró externalCompanyId");
 
   try {
-    // Request both formats to support EcommerceLanding (map) and keep
-    // backward-compatibility for clients that consume `categories`.
-    const response = await axios.get(`${URL}/getProductByCompany/${id}?format=both`, {
+    const response = await axios.get(`${URL}/getProductByCompany/${id}`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     });
     console.debug("productsApi.getProductsByCompany response", response.data);
-    // The backend returns an envelope { categories?, productsByCategory?, meta? }.
-    return response.data as FullProductsResponse;
+    return response.data;
   } catch (error) {
     console.error("productsApi.getProductsByCompany failed", error);
     if (axios.isAxiosError(error)) {
