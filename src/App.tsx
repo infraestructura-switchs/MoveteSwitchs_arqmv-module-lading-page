@@ -14,9 +14,9 @@ import {
 } from "./Api/productsApi";
 import {
   ProductType,
-  ApiResponse,
   CartItem,
   ProductsResponse,
+  FullProductsResponse,
 } from "./types/productsType";
 import { CompanyType } from "./types/companyType";
 import { useCompanyLocal } from "./hooks/useCompanyLocal";
@@ -274,15 +274,20 @@ useEffect(() => {
         }
         console.debug("fetching products with", { token, parsedExternalCompanyId });
 
-        const data: ApiResponse = await getProductsByCompany(
+        const data: FullProductsResponse = await getProductsByCompany(
           token,
           parsedExternalCompanyId
       );
       console.debug("received products payload", data);
       const normalized: ProductsResponse = {};
-      if (data && Array.isArray(data.categories)) {
+      // Prefer productsByCategory when backend provides it (format=both/map).
+      if (data && data.productsByCategory && typeof data.productsByCategory === "object") {
+        Object.entries(data.productsByCategory).forEach(([categoryName, products]) => {
+          normalized[categoryName] = (products || []).map(toProductType);
+        });
+      } else if (data && Array.isArray(data.categories)) {
         data.categories.forEach(({ categoryName, products }) => {
-          normalized[categoryName] = products.map(toProductType);
+          normalized[categoryName] = (products || []).map(toProductType);
         });
       }
 

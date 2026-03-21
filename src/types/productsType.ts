@@ -62,3 +62,13 @@ export type SortParams = {
   signal?: AbortSignal;
 };
 
+export type ProductsByCategoryResponse = {
+  productsByCategory: Record<string, BackendProductDto[]>;
+};
+
+export type FullProductsResponse = {
+  categories?: { categoryName: string; products: BackendProductDto[] }[];
+  productsByCategory?: Record<string, BackendProductDto[]>;
+  meta?: { companyId: number; fetchedAt: string; totalProducts: number };
+};
+
