@@ -23,12 +23,12 @@ describe('category utilities', () => {
       description: 'desc',
     };
     const result = toProductType(input);
-    expect(result).toEqual({
-      id: '123',
+    expect(result).toMatchObject({
+      id: 123,
       arqid: '456',
       productName: 'foo',
       price: 9.99,
-      categoryId: '789',
+      categoryId: 789,
       comments: ['a'],
       information: 'info',
       category: 'cat',

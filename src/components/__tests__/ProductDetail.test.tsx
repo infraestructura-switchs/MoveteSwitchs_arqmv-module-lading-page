@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import React from "react";
 import { ProductDetail } from "../ProductDetail";
 import { ProductType } from "../../types/productsType";
@@ -33,7 +33,9 @@ describe("ProductDetail component", () => {
     fireEvent.click(screen.getByText(/volver/i));
     // not called immediately because of animation delay
     expect(onBack).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(300);
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(onBack).toHaveBeenCalled();
 
     vi.useRealTimers();
