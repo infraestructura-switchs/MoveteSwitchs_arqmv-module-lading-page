@@ -5,50 +5,33 @@ import LoadingScreen from "./components/LoadingScreen";
 import { AdminPanel } from "./components/AdminPanel";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import pkg from "../package.json";
-import { toProductType } from "./utils/category";
 import { Category } from "./types";
-import {
-  getProductsByCompany,
-  searchProducts,
-  getProductsSorted,
-} from "./Api/productsApi";
-import {
-  ProductType,
-  ApiResponse,
-  CartItem,
-  ProductsResponse,
-} from "./types/productsType";
+import { getProductsByCompanyPaged } from "./Api/productsApi";
+import { ProductType, CartItem, ProductsResponse } from "./types/productsType";
 import { CompanyType } from "./types/companyType";
 import { useCompanyLocal } from "./hooks/useCompanyLocal";
 import GenericScreen from "./components/GenericScreen";
-
-// refactored units
 import { storeUrlParams, getStoredUrlParam, getAllStoredParams } from "./utils/urlParams";
 import { CategoryOption } from "./components/CategorySelector";
 import {
   EcommerceLanding,
   FeaturedCategory,
   BenefitItem,
-} from "./components/EcommerceLanding";
+} from "./components/EcommerceLanding.tsx";
 import { RestaurantLanding } from "./components/RestaurantLanding";
+
+const PAGE_SIZE = 5;
 
 function App() {
   const initialUrlParams = useMemo(() => getAllStoredParams(), []);
-
-  function getStoredUrlParamLocal(key: string): string | null {
-    return getStoredUrlParam(key);
-  }
-
-
   const [urlParams, setUrlParams] = useState<Record<string, string>>(initialUrlParams);
-  // urlParams are available via centralized storage; individual components
-  // should use `getUrlParam`/helpers when needed. Avoid unused vars here.
+
   const templateLanding =
     urlParams.templateLanding === "EcommerceLanding"
       ? "EcommerceLanding"
       : "RestaurantLanding";
 
-  const [allProducts, setAllProducts] = useState<ProductsResponse | null>(null);
+  const allProducts: ProductsResponse | null = null;
   const [products, setProducts] = useState<ProductType[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -60,15 +43,18 @@ function App() {
   const { company } = useCompanyLocal();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  // arrows and scrolling are now handled inside <CategorySelector>,
-  // so we don't need these pieces of state any longer.
-  const fetchedRef = useRef(false);
-  const reqIdRef = useRef(0);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState<
     "" | "priceLowToHigh" | "priceHighToLow"
-  >("");
-  const sortAbortRef = useRef<AbortController | null>(null);
+  >("priceLowToHigh");
+
   const [hasToken, setHasToken] = useState(false);
+  const [authToken, setAuthToken] = useState("");
+  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [isPagedMode, setIsPagedMode] = useState(true);
 
   const bebidaImg = "/assets/icons/bebida.png";
   const combosImg = "/assets/icons/combos.png";
@@ -113,9 +99,7 @@ function App() {
     ]
   );
 
-  const [categoryOptions, setCategoryOptions] = useState<
-    CategoryOption[]
-  >([
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([
     { value: "all", label: "Ver todo", img: todosImg },
     { value: "HAMBURGUESAS", label: "Hamburguesa", img: hamburguesaImg },
     { value: "DESGRANADOS", label: "Desgranados", img: popularImg },
@@ -141,8 +125,6 @@ function App() {
     { value: "CONSUMO EMPLEADOS", label: "Consumo empleados", img: papitasImg },
   ]);
 
-  
-  // read version number from package.json so it can be shown in the footer
   const appVersion = pkg.version;
 
   const [config, setConfig] = useLocalStorage<CompanyType>(
@@ -165,8 +147,6 @@ function App() {
   const companyDisplayName = config.productNameCompany || "Movete";
   const primaryColor = config.primaryColor || "#0f172a";
 
-  const externalCompanyId = getStoredUrlParamLocal("externalCompanyId") ?? "";
-
   useEffect(() => {
     const updates: Partial<CompanyType> = {};
     if (initialUrlParams.productNameCompany) {
@@ -182,16 +162,9 @@ function App() {
 
     setUrlParams(initialUrlParams);
     storeUrlParams(initialUrlParams);
-  }, [initialUrlParams, setConfig, setUrlParams]);
+  }, [initialUrlParams, setConfig]);
 
-  const cartItemsCount = cartItems.reduce(
-    (sum, item) => sum + item.quantity,
-    0
-  );
-
-  // debug: expose cartItemsCount to browser console
-  // eslint-disable-next-line no-console
-  console.log('[debug] App cartItemsCount:', cartItemsCount);
+  const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
     if (company) {
@@ -210,25 +183,14 @@ function App() {
     }
   }, [company, setConfig]);
 
-
   useEffect(() => {
     const defaultTitle = "Movete";
     const companyName = config.productNameCompany || defaultTitle;
-    console.debug("title effect run; hasToken=", hasToken, "companyName=", companyName);
-
-    if (hasToken && companyName) {
-      document.title = companyName;
-      console.debug("set document.title to companyName");
-    } else {
-      document.title = defaultTitle;
-      console.debug("set document.title to default");
-    }
+    document.title = hasToken && companyName ? companyName : defaultTitle;
   }, [hasToken, config.productNameCompany]);
-
 
   useEffect(() => {
     const defaultHref = "/assets/image/default-favicon.png";
-    console.debug("favicon effect run; hasToken=", hasToken, "logoUrl=", config.logoUrl);
 
     let link = document.getElementById("favicon") as HTMLLinkElement | null;
     if (!link) {
@@ -241,127 +203,122 @@ function App() {
       document.head.appendChild(link);
     }
 
-    if (hasToken && config.logoUrl) {
-      link.href = config.logoUrl;
-      console.debug("set favicon to logoUrl", config.logoUrl);
-    } else {
-      link.href = defaultHref;
-      console.debug("set favicon to default", defaultHref);
-    }
+    link.href = hasToken && config.logoUrl ? config.logoUrl : defaultHref;
   }, [config.logoUrl, hasToken]);
 
-useEffect(() => {
-  if (fetchedRef.current) return;
-
-  const freshParams = getAllStoredParams();
-  const token = freshParams.token ?? getStoredUrlParam("token") ?? "";
-  const externalCompanyId = freshParams.externalCompanyId ?? getStoredUrlParam("externalCompanyId") ?? "";
-
-  if (!token) {
-    setHasToken(false);
-    setLoading(false);
-    return;
-  }
-
-  fetchedRef.current = true;
-  (async () => {
-    try {
-
-      let parsedExternalCompanyId: number | undefined = undefined;
-        if (externalCompanyId) {
-          const n = Number(externalCompanyId);
-          if (!isNaN(n)) parsedExternalCompanyId = n;
-        }
-        console.debug("fetching products with", { token, parsedExternalCompanyId });
-
-        const data: ApiResponse = await getProductsByCompany(
-          token,
-          parsedExternalCompanyId
-      );
-      console.debug("received products payload", data);
-      const normalized: ProductsResponse = {};
-      if (data && Array.isArray(data.categories)) {
-        data.categories.forEach(({ categoryName, products }) => {
-          normalized[categoryName] = products.map(toProductType);
-        });
-      }
-
-      console.debug("normalized products map", normalized);
-      setAllProducts(normalized);
-
-      const all: ProductType[] = Object.values(normalized).reduce<ProductType[]>(
-        (arr, list) => arr.concat(list), []
-      );
-
-      setProducts(all);
-
-const catKeys = Object.keys(normalized);
-const dynamicOptions = [
-  { value: "all", label: "Ver todo", img: todosImg },
-  ...catKeys.map((key) => {
-    const baseKey = key.split(/\s*[-–]\s*/)[0].trim().toUpperCase();
-    const existing = categoryOptions.find(
-      (opt) => opt.value === key || opt.value === baseKey
-    );
-    return {
-      value: key,
-      label: existing?.label || (baseKey.charAt(0).toUpperCase() + baseKey.slice(1).toLowerCase()),
-      img: existing?.img || categoryImages[baseKey] || categoryImages[key] || popularImg,
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => {
+      window.clearTimeout(timeoutId);
     };
-  }),
-];
-      setCategoryOptions(dynamicOptions);
-      setActiveCategory("all");
+  }, [searchTerm]);
 
-      setHasToken(true);
-      setLoading(false);
-    } catch (e) {
-      console.error("Error al obtener productos:", e);
-      setProducts([]);
-      setHasToken(false);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    }
-  })();
-}, [initialUrlParams]);
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearchTerm]);
 
+  const loadPagedProducts = useCallback(
+    async (targetPage: number) => {
+      if (!authToken || companyId == null) return;
 
-  const fetchSortedFromBackend = useCallback(async (
-    opt: "priceLowToHigh" | "priceHighToLow",
-    categoryValue?: string,
-    nameValue?: string
-  ) => {
-    if (sortAbortRef.current) sortAbortRef.current.abort();
-    const controller = new AbortController();
-    sortAbortRef.current = controller;
-    const sort = opt === "priceLowToHigh" ? "ASC" : "DESC";
-    const categoryParam =
-      (categoryValue ?? activeCategory) === "all"
-        ? undefined
-        : (categoryValue ?? activeCategory).trim();
+      const backendOrder = sortOption === "priceHighToLow" ? "DESC" : "ASC";
+      const categoryParam = activeCategory === "all" ? undefined : activeCategory;
+      const nameParam = debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined;
 
-    try {
-      const result = await getProductsSorted({
-        externalCompanyId: parseInt(externalCompanyId),
-        sort,
+      const result = await getProductsByCompanyPaged({
+        token: authToken,
+        externalCompanyId: companyId,
+        page: targetPage,
+        size: PAGE_SIZE,
+        orders: backendOrder,
+        sortBy: "productId",
         category: categoryParam,
-        name: nameValue?.trim() ? nameValue.trim() : undefined,
-        signal: controller.signal,
+        name: nameParam,
       });
-      setProducts(result);
-    } catch (err) {
-      const errObj = err as { name?: string; code?: string };
-      if (
-        errObj?.name !== "AbortError" &&
-        errObj?.code !== "ERR_CANCELED" &&
-        errObj?.name !== "CanceledError"
-      ) {
-        console.error(err);
-      }
-      setProducts([]);
+
+      setProducts(result.items);
+      setPage(result.page);
+      setTotalPages(result.totalPages);
+      setTotalElements(result.totalElements);
+      setIsPagedMode(true);
+    },
+    [authToken, companyId, sortOption, activeCategory, debouncedSearchTerm]
+  );
+
+  useEffect(() => {
+    const freshParams = getAllStoredParams();
+    const token = freshParams.token ?? getStoredUrlParam("token") ?? "";
+    const externalCompanyIdParam =
+      freshParams.externalCompanyId ?? getStoredUrlParam("externalCompanyId") ?? "";
+
+    if (!token) {
+      setHasToken(false);
+      setLoading(false);
+      return;
     }
-  }, [activeCategory, externalCompanyId]);
+
+    const parsedCompanyId = Number(externalCompanyIdParam);
+    if (!Number.isFinite(parsedCompanyId) || parsedCompanyId <= 0) {
+      setHasToken(false);
+      setLoading(false);
+      return;
+    }
+
+    setAuthToken(token);
+    setCompanyId(parsedCompanyId);
+    setHasToken(true);
+  }, []);
+
+  useEffect(() => {
+    if (!authToken || companyId == null) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await loadPagedProducts(page);
+      } catch (e) {
+        if (cancelled) return;
+        console.error("Error al obtener productos paginados:", e);
+        setProducts([]);
+        setTotalPages(0);
+        setTotalElements(0);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authToken, companyId, page, loadPagedProducts]);
+
+  useEffect(() => {
+    const discovered = Array.from(
+      new Set(
+        products
+          .map((p) => (p.category || "").trim())
+          .filter((name) => name.length > 0)
+      )
+    );
+
+    if (discovered.length === 0) return;
+
+    setCategoryOptions((prev) => {
+      const known = new Set(prev.map((p) => p.value.toUpperCase()));
+      const additions = discovered
+        .filter((name) => !known.has(name.toUpperCase()))
+        .map((name) => ({
+          value: name,
+          label: name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(),
+          img: categoryImages[name.toUpperCase()] || popularImg,
+        }));
+
+      if (additions.length === 0) return prev;
+      return [...prev, ...additions];
+    });
+  }, [products, categoryImages, popularImg]);
 
   const addToCart = (
     product: ProductType,
@@ -376,9 +333,8 @@ const dynamicOptions = [
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-      } else {
-        return [...prev, { product, quantity, comment }];
       }
+      return [...prev, { product, quantity, comment }];
     });
   };
 
@@ -403,7 +359,6 @@ const dynamicOptions = [
   const clearCart = () => {
     setCartItems([]);
   };
-
 
   const addCategory = (categoryData: Omit<Category, "id">) => {
     const newCategory: Category = {
@@ -451,138 +406,60 @@ const dynamicOptions = [
     }
   };
 
-  const filterProducts = useCallback((category: string) => {
-    if (!allProducts) {
-      setProducts([]);
-      return;
-    }
-    if (category === "all") {
-      const all: ProductType[] = Object.values(allProducts).reduce<
-        ProductType[]
-      >((acc, cur) => acc.concat(cur), []);
-      setProducts(all);
-      return;
-    }
-    const key = category.trim().toUpperCase();
-    setProducts(allProducts[key] ?? []);
-  }, [allProducts]);
+  const visibleProducts = products;
 
-  const handleSortChange = useCallback((
-    opt: "" | "priceLowToHigh" | "priceHighToLow"
-  ) => {
-    setSortOption(opt);
-
-    if (!opt) {
-      if (searchTerm.trim()) {
-        (async () => {
-          const categoryParam =
-            activeCategory === "all" ? undefined : activeCategory.trim();
-          try {
-            const results = await searchProducts({
-              externalCompanyId: parseInt(externalCompanyId),
-              name: searchTerm.trim(),
-              category: categoryParam,
-            });
-            setProducts(results);
-          } catch (e) {
-            console.error(e);
-            setProducts([]);
-          }
-        })();
-      } else {
-        filterProducts(activeCategory);
-      }
-      return;
-    }
-    fetchSortedFromBackend(opt, activeCategory, searchTerm);
-  }, [
-    activeCategory,
-    externalCompanyId,
-    fetchSortedFromBackend,
-    filterProducts,
-    searchTerm,
-  ]);
+  const handleSortChange = useCallback(
+    (opt: "" | "priceLowToHigh" | "priceHighToLow") => {
+      setSortOption(opt);
+      setPage(0);
+    },
+    []
+  );
 
   const handleSelectCategory = useCallback((value: string) => {
     setActiveCategory(value);
-    filterProducts(value);
-  }, [filterProducts]);
+    setPage(0);
+  }, []);
 
   const handleSelectFeaturedCategory = useCallback((value: string) => {
     setSearchTerm("");
-    setSortOption("");
     setActiveCategory(value);
-    filterProducts(value);
-  }, [filterProducts]);
+    setPage(0);
+  }, []);
 
-  useEffect(() => {
-    const term = searchTerm.trim();
-    const controller = new AbortController();
-    const myReqId = ++reqIdRef.current;
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      if (nextPage < 0 || nextPage >= totalPages) return;
+      setPage(nextPage);
+    },
+    [totalPages]
+  );
 
-    if (term === "") {
-      controller.abort();
-      if (sortOption) {
-        fetchSortedFromBackend(sortOption, activeCategory, undefined);
-      } else {
-        filterProducts(activeCategory);
-      }
-      return () => controller.abort();
-    }
+  const featuredCategories: FeaturedCategory[] = useMemo(() => {
+    const counts = visibleProducts.reduce<Record<string, number>>((acc, p) => {
+      const key = (p.category || "").trim();
+      if (!key) return acc;
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
 
-    const t = setTimeout(async () => {
-      try {
-        const categoryParam =
-          activeCategory === "all" ? undefined : activeCategory.trim();
-        const results = await searchProducts({
-          externalCompanyId: parseInt(externalCompanyId),
-          name: term,
-          category: categoryParam,
-          signal: controller.signal,
-        });
-        if (reqIdRef.current !== myReqId) return;
-
-        setProducts(results);
-      } catch (err) {
-        const errObj = err as { name?: string };
-        if (errObj?.name === "AbortError") return;
-        setProducts([]);
-      }
-    }, 300);
-
-    return () => {
-      clearTimeout(t);
-      controller.abort();
-    };
-  }, [
-    searchTerm,
-    activeCategory,
-    sortOption,
-    externalCompanyId,
-    fetchSortedFromBackend,
-    filterProducts,
-  ]);
-
-  const featuredCategories: FeaturedCategory[] = (() => {
-    if (!allProducts) return [];
-    const entries = Object.entries(allProducts)
-      .filter(([key]) => key.toLowerCase() !== "all")
-      .map(([key, items]) => ({ key, count: items.length }))
-      .filter((entry) => entry.count > 0)
+    return Object.entries(counts)
+      .map(([key, count]) => {
+        const option = categoryOptions.find(
+          (opt) => opt.value.toUpperCase() === key.toUpperCase()
+        );
+        return {
+          value: key,
+          label:
+            option?.label ||
+            key.charAt(0).toUpperCase() + key.slice(1).toLowerCase(),
+          img: option?.img || categoryImages[key.toUpperCase()] || popularImg,
+          count,
+        };
+      })
       .sort((a, b) => b.count - a.count)
       .slice(0, 6);
-    return entries.map((entry) => {
-      const option = categoryOptions.find((opt) => opt.value === entry.key);
-      return {
-        value: entry.key,
-        label:
-          option?.label ||
-          entry.key.charAt(0).toUpperCase() + entry.key.slice(1).toLowerCase(),
-        img: option?.img || categoryImages[entry.key] || popularImg,
-        count: entry.count,
-      };
-    });
-  })();
+  }, [visibleProducts, categoryOptions, categoryImages, popularImg]);
 
   const benefitItems: BenefitItem[] = [
     {
@@ -636,14 +513,18 @@ const dynamicOptions = [
           activeCategory={activeCategory}
           onSelectCategory={handleSelectCategory}
           onSelectFeaturedCategory={handleSelectFeaturedCategory}
-          products={products}
+          products={visibleProducts}
           allProducts={allProducts}
           onAddToCart={addToCart}
           primaryColor={primaryColor}
           searchTerm={searchTerm}
-            onOpenCart={() => setIsCartOpen(true)}
-            onDirectConfirm={() => cartRef.current?.sendOrder()}
-            cartCount={cartItemsCount}
+          onOpenCart={() => setIsCartOpen(true)}
+          onDirectConfirm={() => cartRef.current?.sendOrder()}
+          cartCount={cartItemsCount}
+          isPagedMode={isPagedMode}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       ) : (
         <RestaurantLanding
@@ -652,14 +533,18 @@ const dynamicOptions = [
           onSelectCategory={handleSelectCategory}
           sortOption={sortOption}
           onSortChange={handleSortChange}
-          products={products}
+          products={visibleProducts}
           allProducts={allProducts}
           onAddToCart={addToCart}
           primaryColor={primaryColor}
           searchTerm={searchTerm}
-            onOpenCart={() => setIsCartOpen(true)}
-            onDirectConfirm={() => cartRef.current?.sendOrder()}
-            cartCount={cartItemsCount}
+          onOpenCart={() => setIsCartOpen(true)}
+          onDirectConfirm={() => cartRef.current?.sendOrder()}
+          cartCount={cartItemsCount}
+          isPagedMode={isPagedMode}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       )}
       <Cart
@@ -684,12 +569,12 @@ const dynamicOptions = [
       {templateLanding === "EcommerceLanding" ? (
         <footer className="text-center text-xs text-gray-500 py-6">
           <p>
-            {companyDisplayName} · Versión {appVersion}
+            {companyDisplayName} · Versión {appVersion} · {totalElements} productos
           </p>
         </footer>
       ) : (
         <footer className="text-center text-xs text-gray-500 py-2">
-          Versión {appVersion}
+          Versión {appVersion} · {totalElements} productos
         </footer>
       )}
     </div>

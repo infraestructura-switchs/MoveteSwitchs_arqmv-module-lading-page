@@ -1,6 +1,13 @@
 import axios from 'axios';
 import {BASE_URL_API} from '../constants/index';
-import { ApiResponse, SearchParams, ProductType, SortParams } from '../types/productsType';
+import {
+  ApiResponse,
+  SearchParams,
+  ProductType,
+  SortParams,
+  PagedProductsParams,
+  PagedProductsResult,
+} from '../types/productsType';
 import { toProductType } from "../utils/category";
 import { getUrlParam } from "../utils/urlParams";
 
@@ -83,4 +90,55 @@ export const getProductsSorted = async ({
 
   const data = response.data;
   return (Array.isArray(data) ? data : []).map(toProductType);
+};
+
+export const getProductsByCompanyPaged = async ({
+  token,
+  externalCompanyId,
+  page,
+  size,
+  orders = 'ASC',
+  sortBy = 'productId',
+  category,
+  name,
+  signal,
+}: PagedProductsParams): Promise<PagedProductsResult> => {
+  const params: Record<string, string | number> = {
+    page,
+    size,
+    orders,
+    sortBy,
+  };
+
+  if (category && category.trim() !== '') params.category = category.trim();
+  if (name && name.trim() !== '') params.name = name.trim();
+
+  const response = await axios.get(
+    `${URL}/getProductByCompany/${externalCompanyId}/paged`,
+    {
+      params,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      signal,
+    }
+  );
+
+  const raw = (response.data ?? {}) as Record<string, unknown>;
+  const rawContent = raw.content;
+  const items = (Array.isArray(rawContent) ? rawContent : []).map(toProductType);
+
+  const pageValue = Number(raw.number ?? page);
+  const sizeValue = Number(raw.size ?? size);
+  const totalPagesValue = Number(raw.totalPages ?? 0);
+  const totalElementsValue = Number(raw.totalElements ?? items.length);
+
+  return {
+    items,
+    page: Number.isFinite(pageValue) ? pageValue : page,
+    size: Number.isFinite(sizeValue) ? sizeValue : size,
+    totalPages: Number.isFinite(totalPagesValue) ? totalPagesValue : 0,
+    totalElements: Number.isFinite(totalElementsValue) ? totalElementsValue : items.length,
+  };
 };

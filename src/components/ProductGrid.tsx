@@ -17,6 +17,7 @@ interface ProductGridProps {
   onOpenCart?: () => void;
   onDirectConfirm?: () => void;
   cartCount?: number;
+  forceFlatMode?: boolean;
 }
 
 export const ProductGrid: React.FC<ProductGridProps> = ({
@@ -32,12 +33,13 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onOpenCart,
   onDirectConfirm,
   cartCount,
+  forceFlatMode = false,
 }) => {
   const itemCount = typeof cartCount === "number" ? cartCount : 0;
   // debug: expose itemCount in console to diagnose visibility issues
   // eslint-disable-next-line no-console
   console.log('[debug] ProductGrid itemCount:', itemCount);
-  if (activeCategory === "all" && !searchTerm && !sortOption) {
+  if (activeCategory === "all" && !searchTerm && !sortOption && !forceFlatMode) {
     if (!allProducts) {
       return null;
     }

@@ -62,4 +62,24 @@ export type SortParams = {
   signal?: AbortSignal;
 };
 
+export type PagedProductsParams = {
+  token: string;
+  externalCompanyId: number;
+  page: number;
+  size: number;
+  orders?: "ASC" | "DESC";
+  sortBy?: string;
+  category?: string;
+  name?: string;
+  signal?: AbortSignal;
+};
+
+export type PagedProductsResult = {
+  items: ProductType[];
+  page: number;
+  size: number;
+  totalPages: number;
+  totalElements: number;
+};
+
 

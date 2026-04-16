@@ -3,7 +3,8 @@ import { ProductGrid } from "./ProductGrid";
 import { SortOptions } from "./SortOptions";
 import { ProductType, ProductsResponse } from "../types/productsType";
 import ProductModal from "./ProductModal";
-import React, { useState } from "react";
+import { useState } from "react";
+import PaginationControls from "./PaginationControls";
 
 export type RestaurantLandingProps = {
   categoryOptions: CategoryOption[];
@@ -19,6 +20,10 @@ export type RestaurantLandingProps = {
   onOpenCart?: () => void;
   onDirectConfirm?: () => void;
   cartCount?: number;
+  isPagedMode?: boolean;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (nextPage: number) => void;
 };
 
 export const RestaurantLanding = ({
@@ -35,6 +40,10 @@ export const RestaurantLanding = ({
   onOpenCart,
   onDirectConfirm,
   cartCount,
+  isPagedMode = false,
+  page = 0,
+  totalPages = 0,
+  onPageChange,
 }: RestaurantLandingProps) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
 
@@ -68,10 +77,19 @@ export const RestaurantLanding = ({
             onAddToCart={onAddToCart}
             primaryColor={primaryColor}
             onViewDetails={handleViewDetails}
-                      onOpenCart={onOpenCart}
-                      onDirectConfirm={onDirectConfirm}
-                      cartCount={cartCount}
+            onOpenCart={onOpenCart}
+            onDirectConfirm={onDirectConfirm}
+            cartCount={cartCount}
+            forceFlatMode={isPagedMode}
           />
+
+          {isPagedMode && onPageChange ? (
+            <PaginationControls
+              page={page}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+            />
+          ) : null}
         </div>
         {selectedProduct && (
           <ProductModal
