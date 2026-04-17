@@ -167,7 +167,6 @@ export function persistUrlParamsAndClean() {
     window.history.replaceState({}, "", url.toString());
   } catch (e) {
     // don't break app if something fails
-    // eslint-disable-next-line no-console
     console.debug("persistUrlParamsAndClean failed", e);
   }
 }

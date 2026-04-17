@@ -37,7 +37,6 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 }) => {
   const itemCount = typeof cartCount === "number" ? cartCount : 0;
   // debug: expose itemCount in console to diagnose visibility issues
-  // eslint-disable-next-line no-console
   console.log('[debug] ProductGrid itemCount:', itemCount);
   if (activeCategory === "all" && !searchTerm && !sortOption && !forceFlatMode) {
     if (!allProducts) {

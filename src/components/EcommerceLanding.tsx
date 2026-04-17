@@ -45,7 +45,7 @@ export type EcommerceLandingProps = {
 };
 
 export const EcommerceLanding = ({
-  config: _config,
+  config,
   companyDisplayName,
   featuredCategories,
   benefitItems,
@@ -68,6 +68,7 @@ export const EcommerceLanding = ({
   totalPages = 0,
   onPageChange,
 }: EcommerceLandingProps) => {
+  void config;
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
 
   const handleViewDetails = (product: ProductType) => {

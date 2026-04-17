@@ -8,7 +8,7 @@ import { persistUrlParamsAndClean } from './utils/urlParams';
 // (keeps only session_id) before React mounts to avoid flashes
 try {
   persistUrlParamsAndClean();
-} catch (e) {
+} catch {
   // ignore errors during init
 }
 

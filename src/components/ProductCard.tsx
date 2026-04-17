@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { ProductType } from "../types/productsType";
-import ProductModal from "./ProductModal";
 
 interface ProductCardProps {
   product: ProductType;
@@ -16,8 +15,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   primaryColor,
   onViewDetails,
 }) => {
+  void onAddToCart;
   // debug: log price values to confirm API mapping
-  // eslint-disable-next-line no-console
   console.debug('[ProductCard] id:', product.id, 'price:', product.price, 'originalPrice:', product.originalPrice);
   const [justClicked, setJustClicked] = useState(false);
 
