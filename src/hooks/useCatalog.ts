@@ -49,7 +49,7 @@ export function useCatalog({
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("priceLowToHigh");
-  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeCategory, setActiveCategory] = useState<string | number>("all");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -59,6 +59,7 @@ export function useCatalog({
     { value: "all", label: "Ver todo", img: todosImg },
   ]);
   const [apiCategoryKeys, setApiCategoryKeys] = useState<string[]>([]);
+  const [apiCategoryIds, setApiCategoryIds] = useState<number[]>([]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -162,7 +163,7 @@ export function useCatalog({
       });
 
       const dynamicOptions: CategoryOption[] = Array.from(unique.values()).map((entry) => ({
-        value: entry.name,
+        value: entry.id != null ? entry.id : entry.name,
         id: entry.id,
         label: formatCategoryLabel(entry.name),
         img: resolveCategoryImage(entry.name, categoryImages, popularImg),
@@ -189,6 +190,12 @@ export function useCatalog({
           .map((it) => (typeof it === "string" ? it : it.name))
           .filter(Boolean) as string[];
 
+        const ids = categoriesFromApi
+          .map((it) => (typeof it === "object" && typeof it.id === "number" ? it.id : undefined))
+          .filter((v): v is number => v != null);
+
+        setApiCategoryIds(Array.from(new Set(ids)));
+
         const normalizedKeys = names.map((n) => normalizeCategoryKey(n)).filter((n) => n.length > 0);
 
         setApiCategoryKeys(Array.from(new Set(normalizedKeys)));
@@ -197,6 +204,7 @@ export function useCatalog({
         if (cancelled) return;
         console.error("Error al obtener categorías por compañía:", error);
         setApiCategoryKeys([]);
+        setApiCategoryIds([]);
       }
     })();
 
@@ -235,14 +243,17 @@ export function useCatalog({
   }, [categoryOptions, activeCategory]);
 
   const apiCategorySet = useMemo(() => new Set(apiCategoryKeys), [apiCategoryKeys]);
+  const apiCategoryIdSet = useMemo(() => new Set(apiCategoryIds), [apiCategoryIds]);
 
   const visibleProducts = useMemo(() => {
-    if (apiCategorySet.size === 0) return products;
+    if (apiCategorySet.size === 0 && apiCategoryIdSet.size === 0) return products;
     return products.filter((product) => {
       const productCategory = normalizeCategoryKey(product.category || "");
-      return apiCategorySet.has(productCategory);
+      if (productCategory && apiCategorySet.has(productCategory)) return true;
+      if (typeof product.categoryId === "number" && apiCategoryIdSet.has(product.categoryId)) return true;
+      return false;
     });
-  }, [products, apiCategorySet]);
+  }, [products, apiCategorySet, apiCategoryIdSet]);
 
   const featuredCategories: FeaturedCategory[] = useMemo(() => {
     const counts = visibleProducts.reduce<Record<string, number>>((acc, p) => {
@@ -271,12 +282,12 @@ export function useCatalog({
     setPage(0);
   }, []);
 
-  const handleSelectCategory = useCallback((value: string) => {
+  const handleSelectCategory = useCallback((value: string | number) => {
     setActiveCategory(value);
     setPage(0);
   }, []);
 
-  const handleSelectFeaturedCategory = useCallback((value: string) => {
+  const handleSelectFeaturedCategory = useCallback((value: string | number) => {
     setSearchTerm("");
     setActiveCategory(value);
     setPage(0);

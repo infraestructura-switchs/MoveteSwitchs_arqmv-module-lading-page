@@ -1,7 +1,7 @@
 import { useRef, useCallback } from "react";
 
 export interface CategoryOption {
-  value: string;
+  value: string | number;
   id?: number;
   label: string;
   img: string;

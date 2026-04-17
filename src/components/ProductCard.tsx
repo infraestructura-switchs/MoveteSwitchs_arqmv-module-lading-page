@@ -41,12 +41,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       }`}
       style={justClicked ? { borderColor: primaryColor } : undefined}
     >
-      <img
-        src={product.image}
-        alt={product.productName}
-        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl flex-shrink-0 cursor-pointer"
-        loading="lazy"
-      />
+      {product.image ? (
+        <img
+          src={product.image}
+          alt={product.productName}
+          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl flex-shrink-0 cursor-pointer"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-xl flex-shrink-0" />
+      )}
 
       <div className="flex flex-col flex-1 ml-3 sm:ml-4 min-w-0 cursor-pointer">
         <div className="flex items-start justify-between gap-3 cursor-pointer">

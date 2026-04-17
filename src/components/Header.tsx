@@ -2,10 +2,6 @@ import React, { useRef, useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { CompanyType } from "../types/companyType";
 import { getUrlParam } from "../utils/urlParams";
-import React, { useRef, useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
-import { CompanyType } from "../types/companyType";
-import { getUrlParam } from "../utils/urlParams";
 
 const logoImg_chuzo_ivan = "/assets/icons/Logo_chuzo_ivan.png";
 // the backend sometimes returns a logoUrl but if we fall back to
