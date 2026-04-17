@@ -61,7 +61,15 @@ export const searchProducts = async ({
 }: SearchParams): Promise<ProductType[]> => {
   const params: Record<string, string | number> = { externalCompanyId };
   if (name && name.trim() !== '') params.name = name.trim();
-  if (category && category.trim() !== '') params.category = category.trim();
+  if (category !== undefined && category !== null) {
+    if (typeof category === 'number' && !Number.isNaN(category)) {
+      params.categoryId = category;
+    } else if (typeof category === 'string' && category.trim() !== '') {
+      const trimmed = category.trim();
+      if (/^\d+$/.test(trimmed)) params.categoryId = Number(trimmed);
+      else params.category = trimmed;
+    }
+  }
 
   const response = await axios.get(`${URL}/search`, {
     params,
@@ -80,7 +88,15 @@ export const getProductsSorted = async ({
   signal,
 }: SortParams): Promise<ProductType[]> => {
   const params: Record<string, string | number> = { externalCompanyId, sort };
-  if (category && category.trim() !== '') params.category = category.trim();
+  if (category !== undefined && category !== null) {
+    if (typeof category === 'number' && !Number.isNaN(category)) {
+      params.categoryId = category;
+    } else if (typeof category === 'string' && category.trim() !== '') {
+      const trimmed = category.trim();
+      if (/^\d+$/.test(trimmed)) params.categoryId = Number(trimmed);
+      else params.category = trimmed;
+    }
+  }
   if (name && name.trim() !== '') params.name = name.trim();
 
   const response = await axios.get(`${URL}/by-price`, {
@@ -109,8 +125,15 @@ export const getProductsByCompanyPaged = async ({
     orders,
     sortBy,
   };
-
-  if (category && category.trim() !== '') params.category = category.trim();
+  if (category !== undefined && category !== null) {
+    if (typeof category === 'number' && !Number.isNaN(category)) {
+      params.categoryId = category;
+    } else if (typeof category === 'string' && category.trim() !== '') {
+      const trimmed = category.trim();
+      if (/^\d+$/.test(trimmed)) params.categoryId = Number(trimmed);
+      else params.category = trimmed;
+    }
+  }
   if (name && name.trim() !== '') params.name = name.trim();
 
   const response = await axios.get(

@@ -136,27 +136,36 @@ export function useCatalog({
   }, [enabled, authToken, companyId, page, loadPagedProducts]);
 
   const buildCategoryOptions = useCallback(
-    (names: string[]): CategoryOption[] => {
+    (items: Array<string | { id: number; name: string }>): CategoryOption[] => {
       const allOption: CategoryOption = {
         value: "all",
         label: "Ver todo",
         img: todosImg,
       };
+      const unique = new Map<string, { id?: number; name: string }>();
 
-      const unique = new Map<string, string>();
-      names.forEach((name) => {
-        const trimmed = (name || "").trim();
-        if (!trimmed) return;
-        const normalized = normalizeCategoryKey(trimmed);
-        if (!unique.has(normalized)) {
-          unique.set(normalized, trimmed.replace(/\s+/g, " "));
+      items.forEach((it) => {
+        if (typeof it === "string") {
+          const trimmed = (it || "").trim();
+          if (!trimmed) return;
+          const normalized = normalizeCategoryKey(trimmed);
+          if (!unique.has(normalized)) unique.set(normalized, { name: trimmed.replace(/\s+/g, " ") });
+        } else if (it && typeof it === "object") {
+          const name = (it.name || "").toString().trim();
+          if (!name) return;
+          const normalized = normalizeCategoryKey(name);
+          const id = typeof it.id === "number" && Number.isFinite(it.id) ? it.id : undefined;
+          const existing = unique.get(normalized);
+          if (!existing) unique.set(normalized, { id, name: name.replace(/\s+/g, " ") });
+          else if (!existing.id && id) existing.id = id;
         }
       });
 
-      const dynamicOptions = Array.from(unique.entries()).map(([, original]) => ({
-        value: original,
-        label: formatCategoryLabel(original),
-        img: resolveCategoryImage(original, categoryImages, popularImg),
+      const dynamicOptions: CategoryOption[] = Array.from(unique.values()).map((entry) => ({
+        value: entry.name,
+        id: entry.id,
+        label: formatCategoryLabel(entry.name),
+        img: resolveCategoryImage(entry.name, categoryImages, popularImg),
       }));
 
       return [allOption, ...dynamicOptions];
@@ -176,9 +185,11 @@ export function useCatalog({
         );
         if (cancelled) return;
 
-        const normalizedKeys = categoriesFromApi
-          .map((name) => normalizeCategoryKey(name))
-          .filter((name) => name.length > 0);
+        const names = categoriesFromApi
+          .map((it) => (typeof it === "string" ? it : it.name))
+          .filter(Boolean) as string[];
+
+        const normalizedKeys = names.map((n) => normalizeCategoryKey(n)).filter((n) => n.length > 0);
 
         setApiCategoryKeys(Array.from(new Set(normalizedKeys)));
         setCategoryOptions(buildCategoryOptions(categoriesFromApi));
@@ -212,10 +223,11 @@ export function useCatalog({
   useEffect(() => {
     if (activeCategory === "all") return;
 
-    const exists = categoryOptions.some(
-      (option) =>
-        normalizeCategoryKey(option.value) === normalizeCategoryKey(activeCategory)
-    );
+    const exists = categoryOptions.some((option) => {
+      if (typeof activeCategory === "number" && typeof option.value === "number") return activeCategory === option.value;
+      const optValStr = typeof option.value === "number" ? String(option.value) : option.value;
+      return normalizeCategoryKey(optValStr) === normalizeCategoryKey(String(activeCategory));
+    });
     if (!exists) {
       setActiveCategory("all");
       setPage(0);
@@ -242,9 +254,7 @@ export function useCatalog({
 
     return Object.entries(counts)
       .map(([key, count]) => {
-        const option = categoryOptions.find(
-          (opt) => normalizeCategoryKey(opt.value) === normalizeCategoryKey(key)
-        );
+        const option = categoryOptions.find((opt) => normalizeCategoryKey(opt.label) === normalizeCategoryKey(key));
         return {
           value: key,
           label: option?.label || formatCategoryLabel(key),

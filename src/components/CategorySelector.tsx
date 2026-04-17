@@ -2,14 +2,15 @@ import { useRef, useCallback } from "react";
 
 export interface CategoryOption {
   value: string;
+  id?: number;
   label: string;
   img: string;
 }
 
 interface CategorySelectorProps {
   options: CategoryOption[];
-  active: string;
-  onSelect: (value: string) => void;
+  active: string | number;
+  onSelect: (value: string | number) => void;
   primaryColor?: string;
 }
 
@@ -66,12 +67,12 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
         onMouseLeave={onMouseUp}
       >
         {options.map((category) => {
-          const isActive = active === category.value;
+          const isActive = typeof active === "number" ? active === category.id : active === category.value;
           return (
             <button
               key={category.value}
               onClick={() => {
-                if (!dragMoved.current) onSelect(category.value);
+                if (!dragMoved.current) onSelect(category.id != null ? category.id : category.value);
               }}
               className="flex flex-col items-center px-4 py-2 font-medium text-sm transition-all flex-shrink-0 gap-1"
               style={{

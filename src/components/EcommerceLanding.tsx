@@ -27,9 +27,9 @@ export type EcommerceLandingProps = {
   sortOption: "" | "priceLowToHigh" | "priceHighToLow";
   onSortChange: (value: "" | "priceLowToHigh" | "priceHighToLow") => void;
   categoryOptions: CategoryOption[];
-  activeCategory: string;
-  onSelectCategory: (value: string) => void;
-  onSelectFeaturedCategory: (value: string) => void;
+  activeCategory: string | number;
+  onSelectCategory: (value: string | number) => void;
+  onSelectFeaturedCategory: (value: string | number) => void;
   products: ProductType[];
   allProducts: ProductsResponse | null;
   onAddToCart: (product: ProductType, qty: number, comment: string) => void;

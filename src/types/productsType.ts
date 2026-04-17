@@ -25,7 +25,7 @@ export interface CartItem {
 export type SearchParams = {
   externalCompanyId: number;           
   name?: string;              
-  category?: string; 
+  category?: string | number; 
   signal?: AbortSignal;           
 };
 
@@ -57,7 +57,7 @@ export interface ApiResponseRaw {
 export type SortParams = {
   externalCompanyId: number;
   sort: 'ASC' | 'DESC';
-  category?: string;
+  category?: string | number;
   name?: string;          
   signal?: AbortSignal;
 };
@@ -69,7 +69,7 @@ export type PagedProductsParams = {
   size: number;
   orders?: "ASC" | "DESC";
   sortBy?: string;
-  category?: string;
+  category?: string | number;
   name?: string;
   signal?: AbortSignal;
 };

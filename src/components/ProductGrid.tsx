@@ -5,7 +5,7 @@ import { ProductCard } from "./ProductCard";
 import FloatingConfirmButton from "./FloatingConfirmButton";
 
 interface ProductGridProps {
-  activeCategory: string;
+  activeCategory: string | number;
   searchTerm: string;
   sortOption: "" | "priceLowToHigh" | "priceHighToLow";
   products: ProductType[];

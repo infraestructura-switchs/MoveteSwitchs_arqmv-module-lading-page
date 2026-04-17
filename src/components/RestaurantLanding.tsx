@@ -8,8 +8,8 @@ import PaginationControls from "./PaginationControls";
 
 export type RestaurantLandingProps = {
   categoryOptions: CategoryOption[];
-  activeCategory: string;
-  onSelectCategory: (value: string) => void;
+  activeCategory: string | number;
+  onSelectCategory: (value: string | number) => void;
   sortOption: "" | "priceLowToHigh" | "priceHighToLow";
   onSortChange: (value: "" | "priceLowToHigh" | "priceHighToLow") => void;
   products: ProductType[];
